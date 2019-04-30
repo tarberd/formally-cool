@@ -25,4 +25,8 @@ fn main() {
     let regular_grammar = RegularGrammar::from(&automata);
 
     println!("{:?}", regular_grammar);
+
+    let automata = Automata::from(&regular_grammar);
+
+    println!("{:?}", automata);
 }

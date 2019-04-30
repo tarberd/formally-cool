@@ -1,6 +1,14 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
+fn state_to_symbol(state: &String) -> String {
+    String::from("<") + state + ">"
+}
+
+fn symbol_to_state(symbol: &String) -> String {
+    symbol[1..(symbol.len() - 1)].to_string()
+}
+
 #[derive(Debug, Clone)]
 pub struct Automata {
     pub start_state: String,
@@ -18,14 +26,40 @@ impl Automata {
     }
 }
 
+impl From<&RegularGrammar> for Automata {
+    fn from(regular_grammar: &RegularGrammar) -> Self {
+        let mut transition_function = HashMap::new();
+
+        let final_state = String::from("accept");
+
+        for (symbol, vec) in &regular_grammar.productions {
+            for derivation in vec {
+                if derivation.len() == 1 {
+                    transition_function.insert(
+                        (symbol_to_state(symbol), derivation[0..1].to_string()),
+                        final_state.clone(),
+                    );
+                } else {
+                    transition_function.insert(
+                        (symbol_to_state(symbol), derivation[0..1].to_string()),
+                        symbol_to_state(&derivation[1..].to_string()),
+                    );
+                }
+            }
+        }
+
+        Automata {
+            start_state: symbol_to_state(&regular_grammar.start_symbol),
+            transition_function: transition_function,
+            accept_states: HashSet::new(),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct RegularGrammar {
     pub start_symbol: String,
     pub productions: HashMap<String, Vec<String>>,
-}
-
-fn state_to_symbol(state: &String) -> String {
-    String::from("<") + state + ">"
 }
 
 impl From<&Automata> for RegularGrammar {
