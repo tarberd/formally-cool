@@ -1,5 +1,6 @@
-use formally_cool::*;
 use std::collections::HashMap;
+
+use formally_cool::regular_languages::*;
 
 fn main() {
     let input = String::from("abababa");
@@ -10,7 +11,7 @@ fn main() {
     hash.insert((String::from("q1"), String::from("a")), String::from("q0"));
     hash.insert((String::from("q1"), String::from("b")), String::from("q1"));
 
-    let automata = Automata {
+    let automata = DeterministicFiniteAutomata {
         start_state: String::from("q0"),
         transition_function: hash,
         accept_states: [String::from("q0")].iter().cloned().collect(),
@@ -26,7 +27,7 @@ fn main() {
 
     println!("{:?}", regular_grammar);
 
-    let automata = Automata::from(&regular_grammar);
+    let automata = NondeterministicFiniteAutomata::from(&regular_grammar);
 
     println!("{:?}", automata);
 }
