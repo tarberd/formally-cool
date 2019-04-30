@@ -1,5 +1,4 @@
-use formally_cool::make_regular_grammar;
-use formally_cool::Automata;
+use formally_cool::*;
 use std::collections::HashMap;
 
 fn main() {
@@ -23,7 +22,7 @@ fn main() {
 
     println!("{:?}", automata);
 
-    let regular_grammar = make_regular_grammar(&automata);
+    let regular_grammar = RegularGrammar::from(&automata);
 
     println!("{:?}", regular_grammar);
 }

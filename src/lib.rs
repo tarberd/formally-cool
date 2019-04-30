@@ -20,40 +20,42 @@ impl Automata {
 
 #[derive(Debug, Clone)]
 pub struct RegularGrammar {
-    pub start_symble: String,
+    pub start_symbol: String,
     pub productions: HashMap<String, Vec<String>>,
 }
 
-pub fn state_to_symble(state: &String) -> String {
+fn state_to_symbol(state: &String) -> String {
     String::from("<") + state + ">"
 }
 
-pub fn make_regular_grammar(automata: &Automata) -> RegularGrammar {
-    let mut productions = HashMap::new();
+impl From<&Automata> for RegularGrammar {
+    fn from(automata: &Automata) -> Self {
+        let mut productions = HashMap::new();
 
-    for ((state, _), _) in &automata.transition_function {
-        productions.insert(state_to_symble(state), vec![]);
-    }
-
-    for ((state, entry_symble), next_state) in &automata.transition_function {
-        match productions.get_mut(&state_to_symble(state)) {
-            Some(x) => x.push(entry_symble.clone() + &state_to_symble(next_state)),
-            None => (),
+        for ((state, _), _) in &automata.transition_function {
+            productions.insert(state_to_symbol(state), vec![]);
         }
 
-        if automata
-            .accept_states
-            .contains(&state_to_symble(next_state))
-        {
-            match productions.get_mut(&state_to_symble(state)) {
-                Some(x) => x.push(entry_symble.clone()),
+        for ((state, entry_symbol), next_state) in &automata.transition_function {
+            match productions.get_mut(&state_to_symbol(state)) {
+                Some(x) => x.push(entry_symbol.clone() + &state_to_symbol(next_state)),
                 None => (),
             }
-        }
-    }
 
-    RegularGrammar {
-        start_symble: state_to_symble(&automata.start_state),
-        productions: productions,
+            if automata
+                .accept_states
+                .contains(&state_to_symbol(next_state))
+            {
+                match productions.get_mut(&state_to_symbol(state)) {
+                    Some(x) => x.push(entry_symbol.clone()),
+                    None => (),
+                }
+            }
+        }
+
+        RegularGrammar {
+            start_symbol: state_to_symbol(&automata.start_state),
+            productions: productions,
+        }
     }
 }
