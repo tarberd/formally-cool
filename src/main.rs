@@ -30,4 +30,10 @@ fn main() {
     let automata = NondeterministicFiniteAutomata::from(&regular_grammar);
 
     println!("{:?}", automata);
+
+    let serialized = serde_yaml::to_string(&automata).unwrap();
+    println!("serialized = {}", serialized);
+
+    let deserialized: NondeterministicFiniteAutomata = serde_yaml::from_str(&serialized).unwrap();
+    println!("deserialized = {:?}", deserialized);
 }

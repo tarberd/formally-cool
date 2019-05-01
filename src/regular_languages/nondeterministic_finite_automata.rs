@@ -3,11 +3,13 @@ use std::collections::HashSet;
 
 use super::regular_gramar::RegularGrammar;
 
+use serde::{Deserialize, Serialize};
+
 fn symbol_to_state(symbol: &String) -> String {
     symbol[1..(symbol.len() - 1)].to_string()
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct NondeterministicFiniteAutomata {
     pub start_state: String,
     pub transition_function: HashMap<(String, String), HashSet<String>>,

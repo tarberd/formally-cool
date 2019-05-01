@@ -3,11 +3,13 @@ use std::collections::HashSet;
 
 use super::deterministic_finite_automata::*;
 
+use serde::{Deserialize, Serialize};
+
 fn state_to_symbol(state: &String) -> String {
     String::from("<") + state + ">"
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct RegularGrammar {
     pub start_symbol: String,
     pub productions: HashMap<String, HashSet<String>>,

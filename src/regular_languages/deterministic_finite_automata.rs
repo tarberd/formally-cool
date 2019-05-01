@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-#[derive(Debug, Clone)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DeterministicFiniteAutomata {
     pub start_state: String,
     pub transition_function: HashMap<(String, String), String>,
