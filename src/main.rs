@@ -1,5 +1,10 @@
 use std::collections::HashMap;
 
+use std::fs::File;
+use std::io;
+use std::io::prelude::*;
+use std::io::{BufReader, BufWriter};
+
 use formally_cool::regular_languages::*;
 
 fn main() {
@@ -36,6 +41,26 @@ fn main() {
 
     let deserialized: NondeterministicFiniteAutomata = serde_yaml::from_str(&serialized).unwrap();
     println!("deserialized = {:?}", deserialized);
+
+    match File::create("automata.yaml") {
+        Ok(file) => {
+            let mut writer = BufWriter::new(file);
+
+            serde_yaml::to_writer(writer, &automata);
+        }
+        Err(e) => println!("error : {:?}", e),
+    }
+
+    match File::open("automata.yaml") {
+        Ok(file) => {
+            let mut reader = BufReader::new(file);
+
+            let automata: NondeterministicFiniteAutomata = serde_yaml::from_reader(reader).unwrap();
+
+            println!("from file = {:?}", automata);
+        }
+        Err(e) => println!("error : {:?}", e),
+    }
 
     let automata = DeterministicFiniteAutomata::from(&automata);
 
