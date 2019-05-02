@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-use super::regular_gramar::RegularGrammar;
+use super::regular_grammar::RegularGrammar;
 
 fn symbol_to_state(symbol: &String) -> String {
     symbol[1..(symbol.len() - 1)].to_string()

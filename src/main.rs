@@ -30,4 +30,8 @@ fn main() {
     let automata = NondeterministicFiniteAutomata::from(&regular_grammar);
 
     println!("{:?}", automata);
+
+    let automata = DeterministicFiniteAutomata::from(&automata);
+
+    println!("{:?}", automata);
 }
