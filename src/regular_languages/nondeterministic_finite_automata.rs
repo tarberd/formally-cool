@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-use super::regular_gramar::RegularGrammar;
+use super::regular_grammar::RegularGrammar;
 
 use serde::{Deserialize, Serialize};
 

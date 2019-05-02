@@ -36,4 +36,8 @@ fn main() {
 
     let deserialized: NondeterministicFiniteAutomata = serde_yaml::from_str(&serialized).unwrap();
     println!("deserialized = {:?}", deserialized);
+
+    let automata = DeterministicFiniteAutomata::from(&automata);
+
+    println!("{:?}", automata);
 }
