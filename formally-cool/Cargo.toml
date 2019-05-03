@@ -1,0 +1,7 @@
+[package]
+name = "formally-cool"
+version = "0.1.0"
+authors = ["tarberd <bernardo.mferrari@gmail.com>"]
+edition = "2018"
+
+[dependencies]
