@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
+use serde::{Deserialize, Serialize};
+
 use super::nondeterministic_finite_automata::NondeterministicFiniteAutomata;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DeterministicFiniteAutomata {
     pub start_state: String,
     pub transition_function: HashMap<(String, String), String>,
@@ -21,7 +23,7 @@ impl DeterministicFiniteAutomata {
 }
 
 impl From<&NondeterministicFiniteAutomata> for DeterministicFiniteAutomata {
-    fn from(automata: &NondeterministicFiniteAutomata) -> Self {
+    fn from(_automata: &NondeterministicFiniteAutomata) -> Self {
         DeterministicFiniteAutomata {
             start_state: String::new(),
             transition_function: HashMap::new(),
