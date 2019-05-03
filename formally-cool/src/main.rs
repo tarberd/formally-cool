@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 
 use std::fs::File;
-use std::io;
-use std::io::prelude::*;
 use std::io::{BufReader, BufWriter};
 
 use formally_cool::regular_languages::*;
@@ -26,43 +24,43 @@ fn main() {
 
     println!("Result {}", result);
 
-    println!("{:?}", automata);
+    println!("{:#?}", automata);
 
     let regular_grammar = RegularGrammar::from(&automata);
 
-    println!("{:?}", regular_grammar);
+    println!("{:#?}", regular_grammar);
 
     let automata = NondeterministicFiniteAutomata::from(&regular_grammar);
 
-    println!("{:?}", automata);
+    println!("{:#?}", automata);
 
     let serialized = serde_yaml::to_string(&automata).unwrap();
     println!("serialized = {}", serialized);
 
     let deserialized: NondeterministicFiniteAutomata = serde_yaml::from_str(&serialized).unwrap();
-    println!("deserialized = {:?}", deserialized);
+    println!("deserialized = {:#?}", deserialized);
 
     match File::create("automata.yaml") {
         Ok(file) => {
-            let mut writer = BufWriter::new(file);
+            let writer = BufWriter::new(file);
 
-            serde_yaml::to_writer(writer, &automata);
+            serde_yaml::to_writer(writer, &automata).unwrap();
         }
         Err(e) => println!("error : {:?}", e),
     }
 
     match File::open("automata.yaml") {
         Ok(file) => {
-            let mut reader = BufReader::new(file);
+            let reader = BufReader::new(file);
 
             let automata: NondeterministicFiniteAutomata = serde_yaml::from_reader(reader).unwrap();
 
-            println!("from file = {:?}", automata);
+            println!("from file = {:#?}", automata);
         }
         Err(e) => println!("error : {:?}", e),
     }
 
     let automata = DeterministicFiniteAutomata::from(&automata);
 
-    println!("{:?}", automata);
+    println!("{:#?}", automata);
 }

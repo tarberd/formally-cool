@@ -23,7 +23,7 @@ impl DeterministicFiniteAutomata {
 }
 
 impl From<&NondeterministicFiniteAutomata> for DeterministicFiniteAutomata {
-    fn from(automata: &NondeterministicFiniteAutomata) -> Self {
+    fn from(_automata: &NondeterministicFiniteAutomata) -> Self {
         DeterministicFiniteAutomata {
             start_state: String::new(),
             transition_function: HashMap::new(),
