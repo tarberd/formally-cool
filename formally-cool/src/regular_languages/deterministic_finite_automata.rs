@@ -2,7 +2,6 @@ use super::nondeterministic_finite_automata::NondeterministicFiniteAutomata;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
-use std::collections::HashSet;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DeterministicFiniteAutomata {
