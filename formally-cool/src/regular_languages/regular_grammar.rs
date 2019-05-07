@@ -1,36 +1,46 @@
-use std::collections::HashMap;
-use std::collections::HashSet;
-
 use super::deterministic_finite_automata::*;
-
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 
-fn state_to_symbol(state: &String) -> String {
+fn state_to_variable(state: &String) -> String {
     String::from("<") + state + ">"
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct RegularGrammar {
-    pub start_symbol: String,
-    pub productions: HashMap<String, HashSet<String>>,
+    pub variables: BTreeSet<String>,
+    pub terminals: BTreeSet<String>,
+    pub rules: BTreeMap<String, BTreeSet<String>>,
+    pub start_variable: String,
 }
 
 impl From<&DeterministicFiniteAutomata> for RegularGrammar {
     fn from(automata: &DeterministicFiniteAutomata) -> Self {
-        let mut productions = HashMap::new();
+        let mut variables = BTreeSet::new();
+        let mut terminals = BTreeSet::new();
+        let mut rules = BTreeMap::new();
+
+        for letter in &automata.alphabet {
+            terminals.insert(letter.clone());
+        }
+
+        for state in &automata.states {
+            variables.insert(state_to_variable(state));
+        }
 
         for ((state, _), _) in &automata.transition_function {
-            productions.insert(state_to_symbol(state), HashSet::new());
+            rules.insert(state_to_variable(state), BTreeSet::new());
         }
 
         for ((state, entry_symbol), next_state) in &automata.transition_function {
-            match productions.get_mut(&state_to_symbol(state)) {
-                Some(set) => set.insert(entry_symbol.clone() + &state_to_symbol(next_state)),
+            match rules.get_mut(&state_to_variable(state)) {
+                Some(set) => set.insert(entry_symbol.clone() + &state_to_variable(next_state)),
                 None => false,
             };
 
             if automata.accept_states.contains(&next_state.clone()) {
-                match productions.get_mut(&state_to_symbol(state)) {
+                match rules.get_mut(&state_to_variable(state)) {
                     Some(set) => set.insert(entry_symbol.clone()),
                     None => false,
                 };
@@ -38,8 +48,10 @@ impl From<&DeterministicFiniteAutomata> for RegularGrammar {
         }
 
         RegularGrammar {
-            start_symbol: state_to_symbol(&automata.start_state),
-            productions: productions,
+            variables: variables,
+            terminals: terminals,
+            rules: rules,
+            start_variable: state_to_variable(&automata.start_state),
         }
     }
 }

@@ -1,8 +1,8 @@
+use formally_cool::regular_languages::*;
 use std::collections::BTreeMap;
 
-use formally_cool::regular_languages::*;
-
 fn main() {
+    let input = String::from("abababa");
     let mut hash = BTreeMap::new();
 
     hash.insert((String::from("q0"), String::from("a")), String::from("q0"));
@@ -21,9 +21,13 @@ fn main() {
         accept_states: [String::from("q0")].iter().cloned().collect(),
     };
 
-    println!("{:#?}", automata);
-
     let regular_grammar = RegularGrammar::from(&automata);
 
-    println!("{:#?}", regular_grammar);
+    let automata = NondeterministicFiniteAutomata::from(&regular_grammar);
+
+    println!("{:#?}", automata);
+
+    let automata = DeterministicFiniteAutomata::from(&automata);
+
+    println!("{:#?}", automata);
 }
