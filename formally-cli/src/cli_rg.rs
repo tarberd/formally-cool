@@ -49,6 +49,6 @@ pub fn create_rg() {
     };
     rg_menu(&mut regular_grammar, name);
 }
-fn rg_menu(regular_grammar: &mut RegularGrammar, name : String) {
+pub fn rg_menu(regular_grammar: &mut RegularGrammar, name : String) {
 
 }

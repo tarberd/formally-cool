@@ -77,7 +77,7 @@ pub fn create_nfa() {
 fn nfa_edit(automata: &mut NondeterministicFiniteAutomata) {
 
 }
-fn nfa_menu (automata: &mut NondeterministicFiniteAutomata, name:String){
+pub fn nfa_menu (automata: &mut NondeterministicFiniteAutomata, name:String){
     let mut running = true;
     while (running) {
         automata.printTable();

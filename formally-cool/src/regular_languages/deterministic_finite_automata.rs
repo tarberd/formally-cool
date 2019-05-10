@@ -54,17 +54,30 @@ impl DeterministicFiniteAutomata {
     }
     pub fn removeState(&mut self, state: &String) {
         let mut s = state.clone();
+        self.accept_states.remove(&s.clone());
         if self.states.remove(&s) {
             let mut transitions = Vec::new();
             for (key, value) in self.transition_function.iter_mut() {
                 let (key1, key2) = key;
-                if key1 == state || key2 == state || value == state {
+                if key1 == state || value == state {
                     transitions.push(key.clone());
                 }
             }
             for item in transitions {
                 self.transition_function.remove(&item);
             }
+        }
+    }
+    pub fn removeSymbol(&mut self, symbol: &String) {
+        let mut transitions = Vec::new();
+        for (key, value) in self.transition_function.iter_mut() {
+            let (key1, key2) = key;
+            if key2 == symbol {
+                transitions.push(key.clone());
+            }
+        }
+        for item in transitions {
+            self.transition_function.remove(&item);
         }
     }
     pub fn compute(&self, input: &str) -> bool {

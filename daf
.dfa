@@ -1,0 +1,2 @@
+---
+"---\nstates:\n  - q0\n  - q1\n  - q2\nalphabet:\n  - a\n  - b\n  - c\ntransition_function:\n  ? - q0\n    - a\n  : q1\n  ? - q0\n    - b\n  : q2\n  ? - q1\n    - b\n  : q2\nstart_state: q0\naccept_states:\n  - q2"
