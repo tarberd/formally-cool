@@ -1,5 +1,7 @@
 use super::cli_util::*;
+use super::cli_dfa::dfa_menu;
 use formally_cool::regular_languages::NondeterministicFiniteAutomata;
+use formally_cool::regular_languages::DeterministicFiniteAutomata;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::collections::HashSet;
@@ -155,20 +157,41 @@ fn edit_state(automata: &mut NondeterministicFiniteAutomata) {
         }
     }
 }
-fn nfa_edit(automata: &mut NondeterministicFiniteAutomata) {
-
+fn nfa_edit(mut automata: &mut NondeterministicFiniteAutomata) {
+    let mut running = true;
+    while(running) {
+        automata.printTable();
+        let mut option = ask("back | state | transition | alphabet | convert (to dfa)".to_string(), false);
+        if option.trim() == "state" {
+            edit_state(&mut automata);
+        } else if option.trim() == "transition" {
+            edit_transition(&mut automata);
+        } else if option.trim() == "alphabet" {
+            edit_alphabet(&mut automata);
+        } else if option.trim() == "back" || option.trim().len() == 0 {
+            running = false;
+        } else if option.trim() == "convert" {
+            let name = ask("name?".to_string(), false);
+            let auto = automata.clone();
+            let mut dfa = DeterministicFiniteAutomata::from(&auto);
+            dfa_menu(&mut dfa, name.clone());
+            running = false;
+        }
+    }
 }
 pub fn nfa_menu (automata: &mut NondeterministicFiniteAutomata, name:String){
     let mut running = true;
     while (running) {
         automata.printTable();
-        let mut option = ask("back | save | edit".to_string(), false);
+        let mut option = ask("back | save | edit | compute".to_string(), false);
         if option.trim() == "save" {
             save(serde_yaml::to_string(&automata).unwrap(), name.clone() + ".nfa");
         } else if option.trim() == "edit" {
             nfa_edit(automata);
         } else if option.trim() == "back" {
             running = false;
+        } else if option.trim() == "compute" {
+
         }
     }
 }

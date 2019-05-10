@@ -162,6 +162,8 @@ pub fn dfa_menu (mut automata: &mut DeterministicFiniteAutomata, name: String){
             dfa_edit(&mut automata);
         } else if option.trim() == "back" {
             running = false;
+        } else if option.trim() == "compute" {
+            
         }
     }
 }
