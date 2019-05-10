@@ -2,28 +2,19 @@ use formally_cool::regular_languages::*;
 use std::collections::BTreeMap;
 
 fn main() {
-    let input = String::from("abababa");
-    let mut hash = BTreeMap::new();
-
-    hash.insert((String::from("q0"), String::from("a")), String::from("q0"));
-    hash.insert((String::from("q0"), String::from("b")), String::from("q1"));
-    hash.insert((String::from("q1"), String::from("a")), String::from("q0"));
-    hash.insert((String::from("q1"), String::from("b")), String::from("q1"));
-
-    let automata = DeterministicFiniteAutomata {
-        states: ["q0".to_string(), "q1".to_string()]
+    let automata = NondeterministicFiniteAutomata {
+        states: ["p".to_string(), "q".to_string(), "r".to_string()]
             .iter()
             .cloned()
             .collect(),
-        alphabet: ["a".to_string(), "b".to_string()].iter().cloned().collect(),
-        transition_function: hash,
-        start_state: String::from("q0"),
-        accept_states: [String::from("q0")].iter().cloned().collect(),
+        alphabet: ["a".to_string(), "b".to_string(), "c".to_string()]
+            .iter()
+            .cloned()
+            .collect(),
+        start_state: String::from("p"),
+        transition_function: BTreeMap::new(),
+        accept_states: ["r".to_string()].iter().cloned().collect(),
     };
-
-    let regular_grammar = RegularGrammar::from(&automata);
-
-    let automata = NondeterministicFiniteAutomata::from(&regular_grammar);
 
     println!("{:#?}", automata);
 

@@ -73,6 +73,29 @@ impl From<&NondeterministicFiniteAutomata> for DeterministicFiniteAutomata {
             }
         }
 
+        let mut epsilon_closure = BTreeMap::new();
+
+        for state in &states {
+            let mut x = BTreeSet::new();
+
+            x.insert(state.clone());
+
+            match automata
+                .transition_function
+                .get(&(state.clone(), "&".to_string()))
+            {
+                Some(set) => {
+                    for state in set {
+                        x.insert(state.clone());
+                    }
+                }
+                None => (),
+            }
+            epsilon_closure.insert(state.clone(), x);
+        }
+
+        println!("{:#?}", epsilon_closure);
+
         for state in &states {
             for letter in &alphabet {
                 let mut output_state_set = BTreeSet::new();
