@@ -73,7 +73,88 @@ pub fn create_nfa() {
     };
     nfa_menu(&mut automata, name);
 }
-
+fn edit_alphabet(automata: &mut NondeterministicFiniteAutomata) {
+    let mut running = true;
+    while(running) {
+        automata.printTable();
+        let mut option = ask("back | add | remove (won't remove if alphabet would become empty)".to_string(), false);
+        if option.trim() == "add" {
+            let letter = ask("symbol?".to_string(), false);
+            automata.alphabet.insert(letter.clone().to_string());
+        } else if option.trim() == "remove" {
+            let letter = ask("symbol?".to_string(), false);
+            if automata.alphabet.len() > 1 {
+                automata.removeSymbol(&letter.clone().to_string());
+            }
+        }
+    }
+}
+fn edit_transition(automata: &mut NondeterministicFiniteAutomata) {
+    let mut running = true;
+    while(running) {
+        automata.printTable();
+        let mut option = ask("add | remove | back".to_string(), false);
+        if option.trim() == "add" {
+            let mut input = ask("transition? (format: 'state' 'symbol' 'next_state')".to_string(), false);
+            let t:Vec<String> = input.split_whitespace().map(|s| s.to_string()).collect();
+            if t.len() > 2{
+                let mut t0 = t[0].to_string().clone();
+                let mut t1 = t[1].to_string().clone();
+                let mut t2 = t[2].to_string().clone();
+                if automata.transition_function.contains_key(&(t0.clone(), t1.clone())) {
+                    automata.transition_function.get_mut(&(t0, t1)).unwrap().insert(t2);
+                } else {
+                    let mut obj = BTreeSet::new();
+                    obj.insert(t[2].to_string().clone());
+                    automata.transition_function.insert((t0, t1), obj);
+                }
+            }
+        } else if option.trim() == "remove" {
+            let mut input = ask("transition? (format: 'state' 'symbol' 'next_state')".to_string(), false);
+            let t:Vec<String> = input.split_whitespace().map(|s| s.to_string()).collect();
+            if t.len() > 2{
+                let mut t0 = t[0].to_string().clone();
+                let mut t1 = t[1].to_string().clone();
+                let mut t2 = t[2].to_string().clone();
+                if automata.transition_function.contains_key(&(t0.clone(), t1.clone())) {
+                    automata.transition_function.get_mut(&(t0.clone(), t1.clone())).unwrap().remove(&t2);
+                    if automata.transition_function[&(t0.clone(), t1.clone())].len() == 0 {
+                        automata.transition_function.remove(&(t0.clone(), t1.clone()));
+                    }
+                }
+            }
+        } else if option.trim() == "back" {
+            running = false;
+        }
+    }
+}
+fn edit_state(automata: &mut NondeterministicFiniteAutomata) {
+    let mut running = true;
+    while(running) {
+        automata.printTable();
+        let mut option = ask("back | add | remove | accept | disaccept | initial".to_string(), false);
+        if option.trim() == "add" {
+            let state = ask("state?".to_string(), false);
+            automata.states.insert(state.clone().to_string());
+        } else if option.trim() == "remove" {
+            let state = ask("state?".to_string(), false);
+            automata.removeState(&state.clone().to_string());
+        } else if option.trim() == "accept" {
+            let state = ask("state?".to_string(), false);
+            automata.states.insert(state.clone().to_string());
+            automata.accept_states.insert(state.clone().to_string());
+        } else if option.trim() == "disaccept" || option.trim().len() == 0 {
+            let state = ask("state?".to_string(), false);
+            automata.accept_states.remove(&state.clone().to_string());
+        } else if option.trim() == "initial (set new initial state)?" || option.trim().len() == 0 {
+            let state = ask("state?".to_string(), false);
+            automata.start_state = state.clone().to_string();
+            automata.states.insert(state.clone().to_string());
+        } else if option.trim() == "back" {
+            running = false;
+        }
+    }
+}
 fn nfa_edit(automata: &mut NondeterministicFiniteAutomata) {
 
 }

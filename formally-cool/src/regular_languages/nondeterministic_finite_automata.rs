@@ -56,6 +56,9 @@ impl NondeterministicFiniteAutomata {
         }
     */
     }
+    pub fn removeSymbol(&mut self, symbol: & String) {
+
+    }
 }
 
 

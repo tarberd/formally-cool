@@ -74,7 +74,9 @@ fn edit_alphabet(automata: &mut DeterministicFiniteAutomata) {
             automata.alphabet.insert(letter.clone().to_string());
         } else if option.trim() == "remove" {
             let letter = ask("symbol?".to_string(), false);
-            automata.removeSymbol(&letter.clone().to_string());
+            if automata.alphabet.len() > 1 {
+                automata.removeSymbol(&letter.clone().to_string());
+            }
         }
     }
 }
