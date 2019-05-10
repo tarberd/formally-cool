@@ -15,6 +15,49 @@ pub struct NondeterministicFiniteAutomata {
     pub transition_function: BTreeMap<(String, String), BTreeSet<String>>,
     pub accept_states: BTreeSet<String>,
 }
+impl NondeterministicFiniteAutomata {
+    pub fn printTable(&self){
+        println!("{0: <10} | {1: <10} | {2: <10}", "from", "symbol", "to");
+        for t in self.transition_function.iter() {
+            /*
+            let ((a, b), c) = t;
+            let mut na = a.to_string().clone();
+            let mut nc = c.to_string().clone();
+            if na == self.start_state {
+                na = "->".to_string() + &na;
+            }
+            if nc == self.start_state {
+                nc = "->".to_string() + &nc;
+            }
+            if self.accept_states.contains(&na) {
+                na = na + "*";
+            }
+            if self.accept_states.contains(&nc) {
+                nc = nc + "*";
+            }
+            println!("{0: <10} | {1: <10} | {2: <10}", na, b, nc);
+            */
+        }
+    }
+    pub fn removeState(&mut self, state: &String) {
+        /*
+        let mut s = state.clone();
+        if self.states.remove(&s) {
+            let mut transitions = Vec::new();
+            for (key, value) in self.transition_function.iter_mut() {
+                let (key1, key2) = key;
+                if key1 == state || key2 == state || value == state {
+                    transitions.push(key.clone());
+                }
+            }
+            for item in transitions {
+                self.transition_function.remove(&item);
+            }
+        }
+    */
+    }
+}
+
 
 impl From<&RegularGrammar> for NondeterministicFiniteAutomata {
     fn from(regular_grammar: &RegularGrammar) -> Self {

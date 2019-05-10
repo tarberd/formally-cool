@@ -13,6 +13,60 @@ pub struct DeterministicFiniteAutomata {
 }
 
 impl DeterministicFiniteAutomata {
+    pub fn printTable(&self){
+        println!("{0: <10} | {1: <10} | {2: <10}", "from", "symbol", "to");
+        for t in self.transition_function.iter() {
+            let ((a, b), c) = t;
+            let mut na = a.to_string().clone();
+            let mut nc = c.to_string().clone();
+            if na == self.start_state {
+                na = "->".to_string() + &na;
+            }
+            if nc == self.start_state {
+                nc = "->".to_string() + &nc;
+            }
+            if self.accept_states.contains(&na) {
+                na = na + "*";
+            }
+            if self.accept_states.contains(&nc) {
+                nc = nc + "*";
+            }
+            println!("{0: <10} | {1: <10} | {2: <10}", na, b, nc);
+        }
+        /*
+        let mut states_vec = Vec::new();
+        states_vec.push(self.start_state.clone());
+        for str in self.states.iter() {
+            if str.to_string() != self.start_state && !self.accept_states.contains(&str.clone()){
+                states_vec.push(str.clone());
+            }
+        }
+        let mut acc_states_vec:Vec<String> = self.accept_states.iter().cloned().collect();
+        states_vec.append(&mut acc_states_vec);
+        for i in states_vec {
+            str = String::new();
+            for j in states_vec {
+                str += format!("{0: <10}", self.transition_function[()]);
+            }
+        }
+
+        */
+    }
+    pub fn removeState(&mut self, state: &String) {
+        let mut s = state.clone();
+        if self.states.remove(&s) {
+            let mut transitions = Vec::new();
+            for (key, value) in self.transition_function.iter_mut() {
+                let (key1, key2) = key;
+                if key1 == state || key2 == state || value == state {
+                    transitions.push(key.clone());
+                }
+            }
+            for item in transitions {
+                self.transition_function.remove(&item);
+            }
+        }
+    }
     pub fn compute(&self, input: &str) -> bool {
         let mut actual_state = self.start_state.clone();
         for symbol in input.chars() {
