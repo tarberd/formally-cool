@@ -46,6 +46,7 @@ fn load() {
         } else if input.trim() == "nfa" {
             load_nfa();
         } else if input.trim() == "rg" {
+            load_rg();
         } else if input.trim() == "regex" {
             load_regex();
         } else if input.trim() == "back" {

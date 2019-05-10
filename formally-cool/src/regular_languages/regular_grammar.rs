@@ -15,6 +15,13 @@ pub struct RegularGrammar {
     pub start_variable: String,
 }
 
+impl RegularGrammar {
+    pub fn printTable(&self){
+        println!("{:#?}", self.rules);
+    }
+}
+
+
 impl From<&DeterministicFiniteAutomata> for RegularGrammar {
     fn from(automata: &DeterministicFiniteAutomata) -> Self {
         let mut variables = BTreeSet::new();
