@@ -1,6 +1,23 @@
 use super::cli_util::*;
 
 
+fn regex_to_str(regex: Vec<char>) -> String{
+    let mut str = String::new();
+    for c in regex {
+        if c == ')' {
+            str.push(c);
+            str.push(' ');
+        } else if c == '+'{
+            str.push(' ');
+            str.push(c);
+            str.push(' ');
+        } else {
+            str.push(c);
+        }
+    }
+    str
+}
+
 pub fn create_regex() {
     let name = ask("name?".to_string(), false);
     let mut regex:Vec<char> = Vec::new();
@@ -39,5 +56,6 @@ pub fn load_regex() {
     let name = ask("name?".to_string(), false);
     let serialized = open(name.clone() + ".regex");
     let mut regex: Vec<char> = serde_yaml::from_str(&serialized).unwrap();
+    println!("{}", regex_to_str(regex.clone()));
     regex_menu(&mut regex, name);
 }
