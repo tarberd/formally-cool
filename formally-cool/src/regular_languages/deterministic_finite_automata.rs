@@ -119,7 +119,7 @@ impl From<&NondeterministicFiniteAutomata> for DeterministicFiniteAutomata {
         let mut states = BTreeSet::new();
         let mut alphabet = BTreeSet::new();
         let mut transition_function = BTreeMap::new();
-        let start_state = automata.start_state.clone() + ".";
+        let mut start_state = String::new();
         let mut accept_states = BTreeSet::new();
 
         for letter in &automata.alphabet {
@@ -144,6 +144,47 @@ impl From<&NondeterministicFiniteAutomata> for DeterministicFiniteAutomata {
             }
         }
 
+        let mut epsilon_closure = BTreeMap::new();
+
+        {
+            for state in &automata.states {
+                let mut before = BTreeSet::new();
+
+                before.insert(state.clone());
+
+                let mut after = BTreeSet::new();
+
+                let mut stop = false;
+                while !stop {
+                    after = BTreeSet::new();
+
+                    for state in &before {
+                        after.insert(state.clone());
+
+                        match automata
+                            .transition_function
+                            .get(&(state.clone(), "&".to_string()))
+                        {
+                            Some(set) => {
+                                for state in set {
+                                    after.insert(state.clone());
+                                }
+                            }
+                            None => (),
+                        }
+                    }
+
+                    if after.is_subset(&before) && after.is_superset(&before) {
+                        stop = true;
+                    } else {
+                        before = after.clone();
+                    }
+                }
+
+                epsilon_closure.insert(state.clone(), after);
+            }
+        }
+
         for state in &states {
             for letter in &alphabet {
                 let mut output_state_set = BTreeSet::new();
@@ -159,33 +200,67 @@ impl From<&NondeterministicFiniteAutomata> for DeterministicFiniteAutomata {
                         .get(&(state_name.to_owned(), letter.clone()))
                     {
                         Some(set) => {
-                            for s in set {
-                                output_state_set.insert(s.clone());
+                            for state in set {
+                                let epsilon_closure_for_state = epsilon_closure.get(state).unwrap();
+
+                                for state in epsilon_closure_for_state {
+                                    output_state_set.insert(state.clone());
+                                }
                             }
                         }
                         None => (),
                     }
                 }
 
-                println!("{:?}", output_state_set);
-
                 let mut output_state_name = String::new();
                 for state_name in output_state_set {
                     output_state_name = output_state_name + state_name.as_str() + ".";
                 }
 
-                println!("{:?}", output_state_name);
-
                 transition_function.insert((state.clone(), letter.clone()), output_state_name);
             }
         }
 
+        {
+            let start_state_closure = epsilon_closure.get(&automata.start_state).unwrap();
+
+            let mut output_state_name = String::new();
+            for state_name in start_state_closure {
+                output_state_name = output_state_name + state_name.as_str() + "_";
+            }
+
+            start_state = output_state_name;
+        }
+
+        let mut underscore_states = BTreeSet::new();
+        let mut underscore_transition_function = BTreeMap::new();
+        let mut underscore_accept_states = BTreeSet::new();
+
+        for state in states {
+            let underscore_state = state.as_str().replace(".", "_");
+            underscore_states.insert(underscore_state);
+        }
+
+        for ((state, letter), out_state) in transition_function {
+            let underscore_state = state.as_str().replace(".", "_");
+            let underscore_out_state = out_state.as_str().replace(".", "_");
+
+            underscore_transition_function
+                .insert((underscore_state, letter.clone()), underscore_out_state);
+        }
+
+        for state in accept_states {
+            let underscore_state = state.as_str().replace(".", "_");
+
+            underscore_accept_states.insert(underscore_state);
+        }
+
         DeterministicFiniteAutomata {
-            states: states,
+            states: underscore_states,
             alphabet: alphabet,
-            transition_function: transition_function,
+            transition_function: underscore_transition_function,
             start_state: start_state,
-            accept_states: accept_states,
+            accept_states: underscore_accept_states,
         }
     }
 }
