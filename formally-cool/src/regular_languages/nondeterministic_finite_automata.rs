@@ -17,8 +17,8 @@ pub struct NondeterministicFiniteAutomata {
 }
 impl NondeterministicFiniteAutomata {
     pub fn printTable(&self){
-        println!("{0: <10} | {1: <10} | {2: <10}", "from", "symbol", "to");
-        for t in self.transition_function.iter() {
+        println!("{:#?}", self.transition_function);
+        //for t in self.transition_function.iter() {
             /*
             let ((a, b), c) = t;
             let mut na = a.to_string().clone();
@@ -37,7 +37,7 @@ impl NondeterministicFiniteAutomata {
             }
             println!("{0: <10} | {1: <10} | {2: <10}", na, b, nc);
             */
-        }
+        //}
     }
     pub fn removeState(&mut self, state: &String) {
         /*
