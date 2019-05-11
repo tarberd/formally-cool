@@ -4,11 +4,13 @@ use formally_cool::regular_languages::RegularGrammar;
 use formally_cool::regular_languages::NondeterministicFiniteAutomata;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
+use std::str::from_utf8;
 
 pub fn create_rg() {
     let name = ask("name?".to_string(), false);
     let mut startvariable = String::new();
     let mut variableset = BTreeSet::new();
+    let mut terminalset = BTreeSet::new();
     let mut prodrules:BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
     let initprod = ask("initial production?
     \n(format: 'initial symbol' 'production' 'production'*
@@ -16,28 +18,45 @@ pub fn create_rg() {
     let mut prodvec:Vec<String> = initprod.split_whitespace().map(|s| s.to_string()).collect();
     if prodvec.len() > 1 {
         startvariable = prodvec[0].clone();
-        variableset.insert(startvariable.clone());
+        variableset.insert(startvariable.clone().trim().to_string());
         let mut obj = BTreeSet::new();
         for i in 1..prodvec.len(){
-            obj.insert(prodvec[i].clone());
-            variableset.insert(prodvec[i].clone());
+            obj.insert(prodvec[i].clone().trim().to_string());
+            if prodvec[i].len() == 2 {
+                terminalset.insert(prodvec[i].clone().to_string().chars().next().unwrap().to_string());
+                variableset.insert(from_utf8(&[prodvec[i].clone().to_string().as_bytes()[1]]).unwrap().to_string());
+            } else {
+                terminalset.insert(prodvec[i].clone().to_string().chars().next().unwrap().to_string());
+            }
         }
-        prodrules.insert(startvariable.clone(), obj);
+        prodrules.insert(startvariable.clone().trim().to_string(), obj);
     }
     let mut prod = ask("production? (format: 'symbol' 'production' 'production'*) || exit".to_string(), true);
 
     while prod.trim() != "exit" && prod.trim().len() > 1{
         let t:Vec<String> = prod.split_whitespace().map(|s| s.to_string()).collect();
         if t.len() > 1{
-            variableset.insert(t[0].clone());
-            if prodrules.contains_key(&t[0].clone()){
+            variableset.insert(t[0].clone().trim().to_string());
+            if prodrules.contains_key(&t[0].clone().trim().to_string()){
                 for i in 1..t.len() {
+                    if t[i].len() == 2 {
+                        terminalset.insert(t[i].clone().to_string().chars().next().unwrap().to_string());
+                        variableset.insert(from_utf8(&[t[i].clone().to_string().as_bytes()[1]]).unwrap().to_string());
+                    } else {
+                        terminalset.insert(t[i].clone().to_string().chars().next().unwrap().to_string());
+                    }
                     prodrules.get_mut(&t[0].clone()).unwrap().insert(t[i].clone());
                 }
             } else {
                 let mut obj = BTreeSet::new();
                 for i in 1..t.len() {
                     obj.insert(t[i].clone());
+                    if t[i].len() == 2 {
+                        terminalset.insert(t[i].clone().to_string().chars().next().unwrap().to_string());
+                        variableset.insert(from_utf8(&[t[i].clone().to_string().as_bytes()[1]]).unwrap().to_string());
+                    } else {
+                        terminalset.insert(t[i].clone().to_string().chars().next().unwrap().to_string());
+                    }
                 }
                 prodrules.insert(t[0].clone(), obj);
             }
@@ -46,7 +65,7 @@ pub fn create_rg() {
     }
     let mut regular_grammar = RegularGrammar{
         variables: variableset,
-        terminals: BTreeSet::new(),
+        terminals: terminalset,
         rules: prodrules,
         start_variable: startvariable,
     };

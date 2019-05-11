@@ -17,7 +17,9 @@ pub struct RegularGrammar {
 
 impl RegularGrammar {
     pub fn printTable(&self){
-        println!("{:#?}", self.rules);
+        println!("rules\n{:#?}", self.rules);
+        println!("variables\n{:#?}", self.variables);
+        println!("terminals\n{:#?}", self.terminals);
     }
 }
 
