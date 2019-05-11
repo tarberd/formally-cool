@@ -82,8 +82,12 @@ impl DeterministicFiniteAutomata {
     }
     pub fn compute(&self, input: &str) -> bool {
         let mut actual_state = self.start_state.clone();
-        for symbol in input.chars() {
-            actual_state = self.transition_function[&(actual_state, symbol.to_string())].clone();
+        for symbol in input.trim().chars() {
+            if self.transition_function.contains_key(&(actual_state.clone(), symbol.to_string())) {
+                actual_state = self.transition_function[&(actual_state, symbol.to_string())].clone();
+            } else{
+                return false;
+            }
         }
         self.accept_states.contains(&actual_state)
     }
