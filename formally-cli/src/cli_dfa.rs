@@ -163,7 +163,12 @@ pub fn dfa_menu (mut automata: &mut DeterministicFiniteAutomata, name: String){
         } else if option.trim() == "back" {
             running = false;
         } else if option.trim() == "compute" {
-            
+            let word = ask("word?".to_string(), true);
+            if automata.compute(&word.to_string().clone()) {
+                println!("word belongs to the language");
+            } else {
+                println!("word doesn't belong to the language");
+            }
         }
     }
 }

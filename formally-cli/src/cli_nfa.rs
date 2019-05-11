@@ -191,7 +191,14 @@ pub fn nfa_menu (automata: &mut NondeterministicFiniteAutomata, name:String){
         } else if option.trim() == "back" {
             running = false;
         } else if option.trim() == "compute" {
-
+            let word = ask("word?".to_string(), true);
+            let auto = automata.clone();
+            let mut dfa = DeterministicFiniteAutomata::from(&auto);
+            if dfa.compute(&word.to_string().clone()) {
+                println!("word belongs to the language");
+            } else {
+                println!("word doesn't belong to the language");
+            }
         }
     }
 }
