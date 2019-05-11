@@ -75,26 +75,44 @@ impl From<&NondeterministicFiniteAutomata> for DeterministicFiniteAutomata {
 
         let mut epsilon_closure = BTreeMap::new();
 
-        for state in &automata.states {
-            let mut x = BTreeSet::new();
+        {
+            for state in &automata.states {
+                let mut before = BTreeSet::new();
 
-            x.insert(state.clone());
+                before.insert(state.clone());
 
-            match automata
-                .transition_function
-                .get(&(state.clone(), "&".to_string()))
-            {
-                Some(set) => {
-                    for state in set {
-                        x.insert(state.clone());
+                let mut after = BTreeSet::new();
+
+                let mut stop = false;
+                while !stop {
+                    after = BTreeSet::new();
+
+                    for state in &before {
+                        after.insert(state.clone());
+
+                        match automata
+                            .transition_function
+                            .get(&(state.clone(), "&".to_string()))
+                        {
+                            Some(set) => {
+                                for state in set {
+                                    after.insert(state.clone());
+                                }
+                            }
+                            None => (),
+                        }
+                    }
+
+                    if after.is_subset(&before) && after.is_superset(&before) {
+                        stop = true;
+                    } else {
+                        before = after.clone();
                     }
                 }
-                None => (),
-            }
-            epsilon_closure.insert(state.clone(), x);
-        }
 
-        println!("Epsilon {:#?}", epsilon_closure);
+                epsilon_closure.insert(state.clone(), after);
+            }
+        }
 
         for state in &states {
             for letter in &alphabet {
@@ -112,8 +130,7 @@ impl From<&NondeterministicFiniteAutomata> for DeterministicFiniteAutomata {
                     {
                         Some(set) => {
                             for state in set {
-                                let epsilon_closure_for_state =
-                                    dbg!(epsilon_closure.get(dbg!(state))).unwrap();
+                                let epsilon_closure_for_state = epsilon_closure.get(state).unwrap();
 
                                 for state in epsilon_closure_for_state {
                                     output_state_set.insert(state.clone());

@@ -25,6 +25,10 @@ fn main() {
         ["q3".to_string()].iter().cloned().collect(),
     );
     transition_function.insert(
+        ("q3".to_string(), "&".to_string()),
+        ["q2".to_string()].iter().cloned().collect(),
+    );
+    transition_function.insert(
         ("q3".to_string(), "a".to_string()),
         ["q1".to_string()].iter().cloned().collect(),
     );
