@@ -20,9 +20,117 @@ impl DeterministicFiniteAutomata {
         }
         self.accept_states.contains(&actual_state)
     }
+
+    pub fn remove_unreachable_states(&self) -> Self {
+        let mut states;
+        let alphabet = self.alphabet.clone();
+        let mut transition_function = BTreeMap::new();
+        let start_state = self.start_state.clone();
+        let mut accept_states = BTreeSet::new();
+
+        {
+            let mut before = BTreeSet::new();
+
+            before.insert(self.start_state.clone());
+
+            let mut after = BTreeSet::new();
+
+            let mut stop = false;
+            while !stop {
+                for state in &before {
+                    after.insert(state.clone());
+
+                    for letter in &alphabet {
+                        match self
+                            .transition_function
+                            .get(&(state.clone(), letter.clone()))
+                        {
+                            Some(state) => {
+                                after.insert(state.clone());
+                            }
+                            None => (),
+                        }
+                    }
+                }
+
+                if after.is_subset(&before) && after.is_superset(&before) {
+                    stop = true;
+                } else {
+                    before = after.clone();
+                }
+            }
+
+            states = before;
+        }
+
+        for ((state, letter), state_out) in &self.transition_function {
+            if states.contains(state) && states.contains(state_out) {
+                transition_function.insert((state.clone(), letter.clone()), state_out.clone());
+            }
+        }
+
+        for state in &self.accept_states {
+            if states.contains(state) {
+                accept_states.insert(state.clone());
+            }
+        }
+
+        DeterministicFiniteAutomata {
+            states: states,
+            alphabet: alphabet,
+            transition_function: transition_function,
+            start_state: start_state,
+            accept_states: accept_states,
+        }
+    }
+
+    pub fn remove_non_productive_states(&self) -> Self {
+        let mut states;
+        let alphabet = self.alphabet.clone();
+        let mut transition_function = BTreeMap::new();
+        let start_state = self.start_state.clone();
+        let mut accept_states = self.accept_states.clone();
+
+        {
+            let mut before = accept_states.clone();
+
+            let mut after = BTreeSet::new();
+
+            let mut stop = false;
+            while !stop {
+                for ((state, _), state_out) in &self.transition_function {
+                    if before.contains(state_out) {
+                        after.insert(state.clone());
+                    }
+                }
+
+                if after.is_subset(&before) && after.is_superset(&before) {
+                    stop = true;
+                } else {
+                    before = after.clone();
+                }
+            }
+
+            states = before;
+        }
+
+        for ((state, letter), state_out) in &self.transition_function {
+            if states.contains(state) && states.contains(state_out) {
+                transition_function.insert((state.clone(), letter.clone()), state_out.clone());
+            }
+        }
+
+        DeterministicFiniteAutomata {
+            states: states,
+            alphabet: alphabet,
+            transition_function: transition_function,
+            start_state: start_state,
+            accept_states: accept_states,
+        }
+    }
 }
 
-pub fn powerset<T: Clone>(slice: &[T]) -> Vec<Vec<T>> {
+fn powerset<T: Clone>(slice: &[T]) -> Vec<Vec<T>> {
     let mut v: Vec<Vec<T>> = Vec::new();
 
     for mask in 0..(1 << slice.len()) {
@@ -48,7 +156,7 @@ impl From<&NondeterministicFiniteAutomata> for DeterministicFiniteAutomata {
         let mut states = BTreeSet::new();
         let mut alphabet = BTreeSet::new();
         let mut transition_function = BTreeMap::new();
-        let mut start_state = String::new();
+        let mut start_state;
         let mut accept_states = BTreeSet::new();
 
         for letter in &automata.alphabet {
@@ -191,5 +299,15 @@ impl From<&NondeterministicFiniteAutomata> for DeterministicFiniteAutomata {
             start_state: start_state,
             accept_states: underscore_accept_states,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_dfa_from_nfa() {
+        assert_eq!(true);
     }
 }
