@@ -128,6 +128,52 @@ impl DeterministicFiniteAutomata {
             accept_states: accept_states,
         }
     }
+
+    pub fn remove_equivalent_states(&self) -> Self {
+        let states = BTreeSet::new();
+        let alphabet = self.alphabet.clone();
+        let transition_function = BTreeMap::new();
+        let start_state = String::new();
+        let accept_states = BTreeSet::new();
+
+        let mut equivalence_classes = BTreeSet::new();
+
+        let accept_states_equivalence = self.accept_states.clone();
+        let non_accept_states_equivalence = self
+            .states
+            .difference(&self.accept_states)
+            .cloned()
+            .collect();
+
+        equivalence_classes.insert(accept_states_equivalence);
+        equivalence_classes.insert(non_accept_states_equivalence);
+
+        for equivalence_class in &equivalence_classes {
+            for state in equivalence_class {
+                let mut equivalence_class_map = BTreeMap::new();
+
+                equivalence_class_map.insert(state, equivalence_class);
+
+                for letter in &alphabet {
+                    match self
+                        .transition_function
+                        .get(&(state.clone(), letter.clone()))
+                    {
+                        Some(_state_out) => {}
+                        None => (),
+                    }
+                }
+            }
+        }
+
+        DeterministicFiniteAutomata {
+            states: states,
+            alphabet: alphabet,
+            transition_function: transition_function,
+            start_state: start_state,
+            accept_states: accept_states,
+        }
+    }
 }
 
 fn powerset<T: Clone>(slice: &[T]) -> Vec<Vec<T>> {
@@ -439,6 +485,123 @@ mod tests {
         assert_eq!(automata.start_state, result_start_state);
 
         let accept_states_result = [String::from("q0")].iter().cloned().collect();
+
+        assert_eq!(automata.accept_states, accept_states_result);
+    }
+
+    #[test]
+    fn remove_equivalent_states() {
+        let mut hash = BTreeMap::new();
+
+        hash.insert((String::from("A"), String::from("0")), String::from("B"));
+        hash.insert((String::from("A"), String::from("1")), String::from("F"));
+        hash.insert((String::from("B"), String::from("0")), String::from("G"));
+        hash.insert((String::from("B"), String::from("1")), String::from("C"));
+        hash.insert((String::from("C"), String::from("0")), String::from("A"));
+        hash.insert((String::from("C"), String::from("1")), String::from("C"));
+        hash.insert((String::from("E"), String::from("0")), String::from("H"));
+        hash.insert((String::from("E"), String::from("1")), String::from("F"));
+        hash.insert((String::from("F"), String::from("0")), String::from("C"));
+        hash.insert((String::from("F"), String::from("1")), String::from("G"));
+        hash.insert((String::from("G"), String::from("0")), String::from("G"));
+        hash.insert((String::from("G"), String::from("1")), String::from("E"));
+        hash.insert((String::from("H"), String::from("0")), String::from("G"));
+        hash.insert((String::from("H"), String::from("1")), String::from("C"));
+
+        let states = [
+            "q0".to_string(),
+            "q1".to_string(),
+            "q2".to_string(),
+            "q3".to_string(),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+
+        let alphabet = ["a".to_string(), "b".to_string()].iter().cloned().collect();
+
+        let accept_states = [String::from("q0"), String::from("q3")]
+            .iter()
+            .cloned()
+            .collect();
+
+        let automata = DeterministicFiniteAutomata {
+            states: states,
+            alphabet: alphabet,
+            transition_function: hash,
+            start_state: String::from("q0"),
+            accept_states: accept_states,
+        };
+
+        let automata = automata.remove_equivalent_states();
+
+        let states_result: BTreeSet<_> = [
+            "(A, E)".to_string(),
+            "(B, H)".to_string(),
+            "(C)".to_string(),
+            "(F)".to_string(),
+            "(G)".to_string(),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+
+        assert_eq!(automata.states, states_result);
+
+        let result_alphabet = ["0".to_string(), "1".to_string()].iter().cloned().collect();
+
+        assert_eq!(automata.alphabet, result_alphabet);
+
+        let mut result_hash = BTreeMap::new();
+
+        result_hash.insert(
+            (String::from("(A, E)"), String::from("0")),
+            String::from("(B, H)"),
+        );
+        result_hash.insert(
+            (String::from("(A, E)"), String::from("1")),
+            String::from("(F)"),
+        );
+        result_hash.insert(
+            (String::from("(B, H)"), String::from("0")),
+            String::from("(G)"),
+        );
+        result_hash.insert(
+            (String::from("(B, H)"), String::from("1")),
+            String::from("(C)"),
+        );
+        result_hash.insert(
+            (String::from("(C)"), String::from("0")),
+            String::from("(A, E)"),
+        );
+        result_hash.insert(
+            (String::from("(C)"), String::from("1")),
+            String::from("(C)"),
+        );
+        result_hash.insert(
+            (String::from("(F)"), String::from("0")),
+            String::from("(C)"),
+        );
+        result_hash.insert(
+            (String::from("(F)"), String::from("1")),
+            String::from("(G)"),
+        );
+        result_hash.insert(
+            (String::from("(G)"), String::from("0")),
+            String::from("(G)"),
+        );
+        result_hash.insert(
+            (String::from("(G)"), String::from("1")),
+            String::from("(A, E)"),
+        );
+
+        assert_eq!(automata.transition_function, result_hash);
+
+        let result_start_state = String::from("(A, E)");
+
+        assert_eq!(automata.start_state, result_start_state);
+
+        let accept_states_result = [String::from("(C)")].iter().cloned().collect();
 
         assert_eq!(automata.accept_states, accept_states_result);
     }
