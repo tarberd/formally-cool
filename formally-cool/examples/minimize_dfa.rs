@@ -116,8 +116,4 @@ fn main() {
     let minimized = minimized.remove_non_productive_states();
 
     println!("{:#?}", minimized);
-
-    let minimized = minimized.remove_equivalent_states();
-
-    println!("{:#?}", minimized);
 }

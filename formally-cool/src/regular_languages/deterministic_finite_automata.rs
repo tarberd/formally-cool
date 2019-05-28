@@ -89,7 +89,7 @@ impl DeterministicFiniteAutomata {
         let alphabet = self.alphabet.clone();
         let mut transition_function = BTreeMap::new();
         let start_state = self.start_state.clone();
-        let mut accept_states = self.accept_states.clone();
+        let accept_states = self.accept_states.clone();
 
         {
             let mut before = accept_states.clone();
@@ -307,7 +307,139 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_dfa_from_nfa() {
-        assert_eq!(true);
+    fn remove_unreachable_states() {
+        let mut hash = BTreeMap::new();
+
+        hash.insert((String::from("q0"), String::from("a")), String::from("q0"));
+        hash.insert((String::from("q0"), String::from("b")), String::from("q1"));
+        hash.insert((String::from("q1"), String::from("a")), String::from("q0"));
+        hash.insert((String::from("q1"), String::from("b")), String::from("q1"));
+        hash.insert((String::from("q2"), String::from("a")), String::from("q0"));
+        hash.insert((String::from("q2"), String::from("b")), String::from("q1"));
+        hash.insert((String::from("q3"), String::from("a")), String::from("q0"));
+        hash.insert((String::from("q3"), String::from("b")), String::from("q1"));
+
+        let states = [
+            "q0".to_string(),
+            "q1".to_string(),
+            "q2".to_string(),
+            "q3".to_string(),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+
+        let alphabet = ["a".to_string(), "b".to_string()].iter().cloned().collect();
+
+        let accept_states = [String::from("q0"), String::from("q3")]
+            .iter()
+            .cloned()
+            .collect();
+
+        let automata = DeterministicFiniteAutomata {
+            states: states,
+            alphabet: alphabet,
+            transition_function: hash,
+            start_state: String::from("q0"),
+            accept_states: accept_states,
+        };
+
+        let automata = automata.remove_unreachable_states();
+
+        let result_states: BTreeSet<_> = ["q0".to_string(), "q1".to_string()]
+            .iter()
+            .cloned()
+            .collect();
+
+        assert_eq!(automata.states, result_states);
+
+        let result_alphabet = ["a".to_string(), "b".to_string()].iter().cloned().collect();
+
+        assert_eq!(automata.alphabet, result_alphabet);
+
+        let mut result_hash = BTreeMap::new();
+
+        result_hash.insert((String::from("q0"), String::from("a")), String::from("q0"));
+        result_hash.insert((String::from("q0"), String::from("b")), String::from("q1"));
+        result_hash.insert((String::from("q1"), String::from("a")), String::from("q0"));
+        result_hash.insert((String::from("q1"), String::from("b")), String::from("q1"));
+
+        assert_eq!(automata.transition_function, result_hash);
+
+        let result_start_state = String::from("q0");
+
+        assert_eq!(automata.start_state, result_start_state);
+
+        let accept_states_result = [String::from("q0")].iter().cloned().collect();
+
+        assert_eq!(automata.accept_states, accept_states_result);
+    }
+
+    #[test]
+    fn remove_non_productive_states() {
+        let mut hash = BTreeMap::new();
+
+        hash.insert((String::from("q0"), String::from("a")), String::from("q0"));
+        hash.insert((String::from("q0"), String::from("b")), String::from("q1"));
+        hash.insert((String::from("q1"), String::from("a")), String::from("q2"));
+        hash.insert((String::from("q1"), String::from("b")), String::from("q0"));
+        hash.insert((String::from("q2"), String::from("a")), String::from("q3"));
+        hash.insert((String::from("q2"), String::from("b")), String::from("q4"));
+        hash.insert((String::from("q3"), String::from("a")), String::from("q4"));
+        hash.insert((String::from("q3"), String::from("b")), String::from("q3"));
+        hash.insert((String::from("q4"), String::from("a")), String::from("q3"));
+        hash.insert((String::from("q4"), String::from("b")), String::from("q4"));
+
+        let states = [
+            "q0".to_string(),
+            "q1".to_string(),
+            "q2".to_string(),
+            "q3".to_string(),
+            "q4".to_string(),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+
+        let alphabet = ["a".to_string(), "b".to_string()].iter().cloned().collect();
+
+        let accept_states = [String::from("q0")].iter().cloned().collect();
+
+        let automata = DeterministicFiniteAutomata {
+            states: states,
+            alphabet: alphabet,
+            transition_function: hash,
+            start_state: String::from("q0"),
+            accept_states: accept_states,
+        };
+
+        let automata = automata.remove_non_productive_states();
+
+        let result_states: BTreeSet<_> = ["q0".to_string(), "q1".to_string()]
+            .iter()
+            .cloned()
+            .collect();
+
+        assert_eq!(automata.states, result_states);
+
+        let result_alphabet = ["a".to_string(), "b".to_string()].iter().cloned().collect();
+
+        assert_eq!(automata.alphabet, result_alphabet);
+
+        let mut result_hash = BTreeMap::new();
+
+        result_hash.insert((String::from("q0"), String::from("a")), String::from("q0"));
+        result_hash.insert((String::from("q0"), String::from("b")), String::from("q1"));
+        result_hash.insert((String::from("q1"), String::from("b")), String::from("q0"));
+
+        assert_eq!(automata.transition_function, result_hash);
+
+        let result_start_state = String::from("q0");
+
+        assert_eq!(automata.start_state, result_start_state);
+
+        let accept_states_result = [String::from("q0")].iter().cloned().collect();
+
+        assert_eq!(automata.accept_states, accept_states_result);
     }
 }
