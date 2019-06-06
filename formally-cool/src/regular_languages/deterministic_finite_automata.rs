@@ -12,7 +12,7 @@ pub struct DeterministicFiniteAutomata {
     pub accept_states: BTreeSet<String>,
 }
 
-pub fn state_to_set(state: &String) -> BTreeSet<String> {
+pub fn state_to_set(_state: &String) -> BTreeSet<String> {
     BTreeSet::new()
 }
 
@@ -295,6 +295,12 @@ impl DeterministicFiniteAutomata {
             start_state: start_state,
             accept_states: accept_states,
         }
+    }
+
+    pub fn minimize(&self) -> Self {
+        let dfa = self.remove_unreachable_states();
+        let dfa = dfa.remove_non_productive_states();
+        dfa.remove_equivalent_states()
     }
 }
 

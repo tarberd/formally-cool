@@ -109,11 +109,7 @@ fn main() {
 
     println!("Start state : {}", automata.start_state);
 
-    let minimized = automata.remove_unreachable_states();
-
-    println!("{:#?}", minimized);
-
-    let minimized = minimized.remove_non_productive_states();
+    let minimized = automata.minimize();
 
     println!("{:#?}", minimized);
 }
