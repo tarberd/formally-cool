@@ -12,6 +12,26 @@ pub struct DeterministicFiniteAutomata {
     pub accept_states: BTreeSet<String>,
 }
 
+pub fn state_to_set(state: &String) -> BTreeSet<String> {
+    BTreeSet::new()
+}
+
+pub fn set_to_state(set: &BTreeSet<String>) -> String {
+    let mut concatenated_state = String::from("(");
+
+    for state in set {
+        if state != set.iter().last().unwrap() {
+            concatenated_state = concatenated_state + state + ", ";
+        } else {
+            concatenated_state = concatenated_state + state;
+        }
+    }
+
+    concatenated_state += ")";
+
+    concatenated_state
+}
+
 impl DeterministicFiniteAutomata {
     pub fn compute(&self, input: &str) -> bool {
         let mut actual_state = self.start_state.clone();
@@ -130,12 +150,13 @@ impl DeterministicFiniteAutomata {
     }
 
     pub fn remove_equivalent_states(&self) -> Self {
-        let states = BTreeSet::new();
+        let mut states = BTreeSet::new();
         let alphabet = self.alphabet.clone();
-        let transition_function = BTreeMap::new();
-        let start_state = String::new();
-        let accept_states = BTreeSet::new();
+        let mut transition_function = BTreeMap::new();
+        let mut start_state = String::new();
+        let mut accept_states = BTreeSet::new();
 
+        // P := {F, Q \ F};
         let mut equivalence_classes = BTreeSet::new();
 
         let accept_states_equivalence = self.accept_states.clone();
@@ -145,23 +166,124 @@ impl DeterministicFiniteAutomata {
             .cloned()
             .collect();
 
-        equivalence_classes.insert(accept_states_equivalence);
+        equivalence_classes.insert(accept_states_equivalence.clone());
         equivalence_classes.insert(non_accept_states_equivalence);
 
-        for equivalence_class in &equivalence_classes {
-            for state in equivalence_class {
-                let mut equivalence_class_map = BTreeMap::new();
+        // W := {F};
+        let mut equivalence_classes_aux = BTreeSet::new();
 
-                equivalence_class_map.insert(state, equivalence_class);
+        equivalence_classes_aux.insert(accept_states_equivalence);
 
-                for letter in &alphabet {
-                    match self
-                        .transition_function
-                        .get(&(state.clone(), letter.clone()))
-                    {
-                        Some(_state_out) => {}
-                        None => (),
+        // while (W is not empty) do
+        while !equivalence_classes_aux.is_empty() {
+            // choose and remove a set A from W
+            let current_set = equivalence_classes_aux.iter().cloned().last().unwrap();
+            equivalence_classes_aux.remove(&current_set);
+
+            // for each c in Σ do
+            for letter in &alphabet {
+                // let X be the set of states for which a transition on c leads to a state in A
+                let mut auxiliar_set = BTreeSet::new();
+
+                for ((state, input), out_state) in &self.transition_function {
+                    if input == letter {
+                        if current_set.contains(out_state) {
+                            auxiliar_set.insert(state.clone());
+                        }
                     }
+                }
+
+                // for each set Y in P for which X ∩ Y is nonempty and Y \ X is nonempty do
+                let mut equivalence_classes_vector: Vec<_> =
+                    equivalence_classes.iter().cloned().collect();
+
+                let mut i = 0;
+                while i < equivalence_classes_vector.len() {
+                    let intersection: BTreeSet<String> = auxiliar_set
+                        .intersection(&equivalence_classes_vector[i])
+                        .cloned()
+                        .collect();
+
+                    let difference: BTreeSet<String> = equivalence_classes_vector[i]
+                        .difference(&auxiliar_set)
+                        .cloned()
+                        .collect();
+
+                    if !intersection.is_empty() && !difference.is_empty() {
+                        // replace Y in P by the two sets X ∩ Y and Y \ X
+                        let equivalence_class = equivalence_classes_vector.remove(i);
+                        equivalence_classes_vector.push(intersection.clone());
+                        equivalence_classes_vector.push(difference.clone());
+
+                        // if Y is in W
+                        //     replace Y in W by the same two sets
+                        // else
+                        //     if |X ∩ Y| <= |Y \ X|
+                        //         add X ∩ Y to W
+                        //     else
+                        //         add Y \ X to W
+                        if equivalence_classes_aux.contains(&equivalence_class) {
+                            equivalence_classes_aux.remove(&equivalence_class);
+                            equivalence_classes_aux.insert(intersection.clone());
+                            equivalence_classes_aux.insert(difference.clone());
+                        } else {
+                            if intersection.len() <= difference.len() {
+                                equivalence_classes_aux.insert(intersection.clone());
+                            } else {
+                                equivalence_classes_aux.insert(difference.clone());
+                            }
+                        }
+                    }
+
+                    equivalence_classes = equivalence_classes_vector.iter().cloned().collect();
+                    i += 1;
+                    // end;
+                }
+                // end;
+            }
+            // end;
+        }
+        //
+
+        for equivalence_class in &equivalence_classes {
+            for accept_state in &self.accept_states {
+                if equivalence_class.contains(accept_state) {
+                    accept_states.insert(set_to_state(equivalence_class));
+                }
+            }
+        }
+
+        for equivalence_class in &equivalence_classes {
+            if equivalence_class.contains(&self.start_state) {
+                start_state = set_to_state(equivalence_class);
+            }
+        }
+
+        for equivalence_class in &equivalence_classes {
+            for letter in &alphabet {
+                let state_string = set_to_state(equivalence_class);
+                states.insert(state_string.clone());
+                let state = equivalence_class.iter().cloned().last().unwrap();
+
+                match self
+                    .transition_function
+                    .get(&(state.clone(), letter.clone()))
+                {
+                    Some(out_state) => {
+                        let mut out_state_equivalence_class = BTreeSet::new();
+
+                        for equivalence_class in &equivalence_classes {
+                            if equivalence_class.contains(out_state) {
+                                out_state_equivalence_class = equivalence_class.clone();
+                            }
+                        }
+
+                        transition_function.insert(
+                            (state_string.clone(), letter.clone()),
+                            set_to_state(&out_state_equivalence_class),
+                        );
+                    }
+                    None => (),
                 }
             }
         }
@@ -494,33 +616,33 @@ mod tests {
         let mut hash = BTreeMap::new();
 
         hash.insert((String::from("A"), String::from("0")), String::from("B"));
-        hash.insert((String::from("A"), String::from("1")), String::from("F"));
-        hash.insert((String::from("B"), String::from("0")), String::from("G"));
-        hash.insert((String::from("B"), String::from("1")), String::from("C"));
-        hash.insert((String::from("C"), String::from("0")), String::from("A"));
-        hash.insert((String::from("C"), String::from("1")), String::from("C"));
-        hash.insert((String::from("E"), String::from("0")), String::from("H"));
+        hash.insert((String::from("A"), String::from("1")), String::from("C"));
+        hash.insert((String::from("B"), String::from("0")), String::from("A"));
+        hash.insert((String::from("B"), String::from("1")), String::from("D"));
+        hash.insert((String::from("C"), String::from("0")), String::from("E"));
+        hash.insert((String::from("C"), String::from("1")), String::from("F"));
+        hash.insert((String::from("D"), String::from("0")), String::from("E"));
+        hash.insert((String::from("D"), String::from("1")), String::from("F"));
+        hash.insert((String::from("E"), String::from("0")), String::from("E"));
         hash.insert((String::from("E"), String::from("1")), String::from("F"));
-        hash.insert((String::from("F"), String::from("0")), String::from("C"));
-        hash.insert((String::from("F"), String::from("1")), String::from("G"));
-        hash.insert((String::from("G"), String::from("0")), String::from("G"));
-        hash.insert((String::from("G"), String::from("1")), String::from("E"));
-        hash.insert((String::from("H"), String::from("0")), String::from("G"));
-        hash.insert((String::from("H"), String::from("1")), String::from("C"));
+        hash.insert((String::from("F"), String::from("0")), String::from("F"));
+        hash.insert((String::from("F"), String::from("1")), String::from("F"));
 
         let states = [
-            "q0".to_string(),
-            "q1".to_string(),
-            "q2".to_string(),
-            "q3".to_string(),
+            "A".to_string(),
+            "B".to_string(),
+            "C".to_string(),
+            "D".to_string(),
+            "E".to_string(),
+            "F".to_string(),
         ]
         .iter()
         .cloned()
         .collect();
 
-        let alphabet = ["a".to_string(), "b".to_string()].iter().cloned().collect();
+        let alphabet = ["0".to_string(), "1".to_string()].iter().cloned().collect();
 
-        let accept_states = [String::from("q0"), String::from("q3")]
+        let accept_states = [String::from("C"), String::from("D"), String::from("E")]
             .iter()
             .cloned()
             .collect();
@@ -529,18 +651,16 @@ mod tests {
             states: states,
             alphabet: alphabet,
             transition_function: hash,
-            start_state: String::from("q0"),
+            start_state: String::from("A"),
             accept_states: accept_states,
         };
 
         let automata = automata.remove_equivalent_states();
 
         let states_result: BTreeSet<_> = [
-            "(A, E)".to_string(),
-            "(B, H)".to_string(),
-            "(C)".to_string(),
+            "(A, B)".to_string(),
+            "(C, D, E)".to_string(),
             "(F)".to_string(),
-            "(G)".to_string(),
         ]
         .iter()
         .cloned()
@@ -555,53 +675,37 @@ mod tests {
         let mut result_hash = BTreeMap::new();
 
         result_hash.insert(
-            (String::from("(A, E)"), String::from("0")),
-            String::from("(B, H)"),
+            (String::from("(A, B)"), String::from("0")),
+            String::from("(A, B)"),
         );
         result_hash.insert(
-            (String::from("(A, E)"), String::from("1")),
+            (String::from("(A, B)"), String::from("1")),
+            String::from("(C, D, E)"),
+        );
+        result_hash.insert(
+            (String::from("(C, D, E)"), String::from("0")),
+            String::from("(C, D, E)"),
+        );
+        result_hash.insert(
+            (String::from("(C, D, E)"), String::from("1")),
             String::from("(F)"),
         );
         result_hash.insert(
-            (String::from("(B, H)"), String::from("0")),
-            String::from("(G)"),
-        );
-        result_hash.insert(
-            (String::from("(B, H)"), String::from("1")),
-            String::from("(C)"),
-        );
-        result_hash.insert(
-            (String::from("(C)"), String::from("0")),
-            String::from("(A, E)"),
-        );
-        result_hash.insert(
-            (String::from("(C)"), String::from("1")),
-            String::from("(C)"),
-        );
-        result_hash.insert(
             (String::from("(F)"), String::from("0")),
-            String::from("(C)"),
+            String::from("(F)"),
         );
         result_hash.insert(
             (String::from("(F)"), String::from("1")),
-            String::from("(G)"),
-        );
-        result_hash.insert(
-            (String::from("(G)"), String::from("0")),
-            String::from("(G)"),
-        );
-        result_hash.insert(
-            (String::from("(G)"), String::from("1")),
-            String::from("(A, E)"),
+            String::from("(F)"),
         );
 
         assert_eq!(automata.transition_function, result_hash);
 
-        let result_start_state = String::from("(A, E)");
+        let result_start_state = String::from("(A, B)");
 
         assert_eq!(automata.start_state, result_start_state);
 
-        let accept_states_result = [String::from("(C)")].iter().cloned().collect();
+        let accept_states_result = [String::from("(C, D, E)")].iter().cloned().collect();
 
         assert_eq!(automata.accept_states, accept_states_result);
     }
