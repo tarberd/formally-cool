@@ -1,4 +1,4 @@
-use super::regular_grammar::RegularGrammar;
+use super::grammar::Grammar;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
@@ -62,8 +62,8 @@ impl NondeterministicFiniteAutomata {
 }
 
 
-impl From<&RegularGrammar> for NondeterministicFiniteAutomata {
-    fn from(regular_grammar: &RegularGrammar) -> Self {
+impl From<&Grammar> for NondeterministicFiniteAutomata {
+    fn from(regular_grammar: &Grammar) -> Self {
         let mut states = BTreeSet::new();
         let mut alphabet = BTreeSet::new();
         let mut transition_function = BTreeMap::new();

@@ -23,7 +23,7 @@ fn main() {
 
     println!("{:#?}", automata);
 
-    let regular_grammar = RegularGrammar::from(&automata);
+    let regular_grammar = Grammar::from(&automata);
 
     println!("{:#?}", regular_grammar);
 }

@@ -1,9 +1,8 @@
 use super::cli_util::*;
 use super::cli_rg::rg_menu;
 use formally_cool::regular_languages::DeterministicFiniteAutomata;
-use formally_cool::regular_languages::RegularGrammar;
+use formally_cool::regular_languages::Grammar;
 use std::collections::BTreeMap;
-use std::collections::BTreeSet;
 use std::collections::HashSet;
 
 pub fn create_dfa() {
@@ -11,9 +10,9 @@ pub fn create_dfa() {
     let alpha = ask("alphabet? (format: 'symbol' 'symbol'*)".to_string(), false);
     let symbols:HashSet<String> = alpha.split_whitespace().map(|s| s.to_string()).collect();
 
-    let mut states = ask("states? (format: 'initial state' 'state'* || 'number of states')".to_string(), false);
+    let states = ask("states? (format: 'initial state' 'state'* || 'number of states')".to_string(), false);
     let mut statesvec:Vec<String> = states.split_whitespace().map(|s| s.to_string()).collect();
-    let mut initstate = String::new();
+    let mut initstate;
     if statesvec.len() == 1 && statesvec[0].parse::<i32>().is_ok() {
         let num_states:i32 = statesvec[0].parse().unwrap();
         statesvec[0] = "q0".to_string();
@@ -27,8 +26,8 @@ pub fn create_dfa() {
     }
     let mut stateshash:HashSet<String> = statesvec.iter().cloned().collect();
 
-    let mut accstates = ask("accept states? (format: 'state'*), a state will be created if it does not exist".to_string(), true);
-    let mut accstatesvec:Vec<String> = accstates.split_whitespace().map(|s| s.to_string()).collect();
+    let accstates = ask("accept states? (format: 'state'*), a state will be created if it does not exist".to_string(), true);
+    let accstatesvec:Vec<String> = accstates.split_whitespace().map(|s| s.to_string()).collect();
 
     let accstateshash:HashSet<String> = accstatesvec.iter().cloned().collect();
     for str in accstateshash.iter() {
@@ -65,10 +64,10 @@ pub fn create_dfa() {
     dfa_menu(&mut automata, name);
 }
 fn edit_alphabet(automata: &mut DeterministicFiniteAutomata) {
-    let mut running = true;
-    while(running) {
+    let running = true;
+    while running {
         automata.printTable();
-        let mut option = ask("back | add | remove (won't remove if alphabet would become empty)".to_string(), false);
+        let option = ask("back | add | remove (won't remove if alphabet would become empty)".to_string(), false);
         if option.trim() == "add" {
             let letter = ask("symbol?".to_string(), false);
             automata.alphabet.insert(letter.clone().to_string());
@@ -82,17 +81,17 @@ fn edit_alphabet(automata: &mut DeterministicFiniteAutomata) {
 }
 fn edit_transition(automata: &mut DeterministicFiniteAutomata) {
     let mut running = true;
-    while(running) {
+    while running {
         automata.printTable();
-        let mut option = ask("add | remove | back".to_string(), false);
+        let option = ask("add | remove | back".to_string(), false);
         if option.trim() == "add" {
-            let mut input = ask("transition? (format: 'state' 'symbol' 'next_state')".to_string(), false);
+            let input = ask("transition? (format: 'state' 'symbol' 'next_state')".to_string(), false);
             let t:Vec<String> = input.split_whitespace().map(|s| s.to_string()).collect();
             if t.len() > 2{
                 automata.transition_function.insert((t[0].clone(), t[1].clone()), t[2].clone());
             }
         } else if option.trim() == "remove" {
-            let mut input = ask("transition? (format: 'state' 'symbol' 'next_state')".to_string(), false);
+            let input = ask("transition? (format: 'state' 'symbol' 'next_state')".to_string(), false);
             let t:Vec<String> = input.split_whitespace().map(|s| s.to_string()).collect();
             if t.len() > 2{
                 automata.transition_function.remove(&(t[0].clone(), t[1].clone()));
@@ -104,9 +103,9 @@ fn edit_transition(automata: &mut DeterministicFiniteAutomata) {
 }
 fn edit_state(automata: &mut DeterministicFiniteAutomata) {
     let mut running = true;
-    while(running) {
+    while running {
         automata.printTable();
-        let mut option = ask("back | add | remove | accept | disaccept | initial".to_string(), false);
+        let option = ask("back | add | remove | accept | disaccept | initial".to_string(), false);
         if option.trim() == "add" {
             let state = ask("state?".to_string(), false);
             automata.states.insert(state.clone().to_string());
@@ -131,9 +130,9 @@ fn edit_state(automata: &mut DeterministicFiniteAutomata) {
 }
 fn dfa_edit(mut automata: &mut DeterministicFiniteAutomata) {
     let mut running = true;
-    while(running) {
+    while running {
         automata.printTable();
-        let mut option = ask("back | state | transition | alphabet | convert (to rg)".to_string(), false);
+        let option = ask("back | state | transition | alphabet | convert (to rg)".to_string(), false);
         if option.trim() == "state" {
             edit_state(&mut automata);
         } else if option.trim() == "transition" {
@@ -145,7 +144,7 @@ fn dfa_edit(mut automata: &mut DeterministicFiniteAutomata) {
         } else if option.trim() == "convert" {
             let name = ask("name?".to_string(), false);
             let auto = automata.clone();
-            let mut rg = RegularGrammar::from(&auto);
+            let mut rg = Grammar::from(&auto);
             rg_menu(&mut rg, name.clone());
             running = false;
         }
@@ -153,9 +152,9 @@ fn dfa_edit(mut automata: &mut DeterministicFiniteAutomata) {
 }
 pub fn dfa_menu (mut automata: &mut DeterministicFiniteAutomata, name: String){
     let mut running = true;
-    while (running) {
+    while running {
         automata.printTable();
-        let mut option = ask("back | save | edit | compute".to_string(), false);
+        let option = ask("back | save | edit | compute".to_string(), false);
         if option.trim() == "save" {
             save(serde_yaml::to_string(&automata).unwrap(), name.clone() + ".dfa");
         } else if option.trim() == "edit" {

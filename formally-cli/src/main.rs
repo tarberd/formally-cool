@@ -6,20 +6,14 @@ mod cli_nfa;
 use cli_nfa::*;
 mod cli_rg;
 use cli_rg::*;
-mod cli_regex;
-use cli_regex::*;
-
-use formally_cool::regular_languages::*;
-
-use std::collections::BTreeMap;
-use std::collections::BTreeSet;
-use std::collections::HashSet;
+mod cli_cfg;
+use cli_cfg::*;
 
 
 fn create (){
     let mut running = true;
     while running {
-        let mut input = ask("dfa | nfa | rg | regex | back".to_string(), false);
+        let input = ask("dfa | nfa | rg | cfg | back".to_string(), false);
         running = false;
         if input.trim() == "dfa" {
             create_dfa();
@@ -27,8 +21,8 @@ fn create (){
             create_nfa();
         } else if input.trim() == "rg" {
             create_rg();
-        } else if input.trim() == "regex" {
-            create_regex();
+        } else if input.trim() == "cfg" {
+            create_cfg();
         } else if input.trim() == "back" {
         } else {
             running = true;
@@ -39,7 +33,7 @@ fn create (){
 fn load() {
     let mut running = true;
     while running {
-        let mut input = ask("dfa | nfa | rg | regex | back".to_string(), false);
+        let input = ask("dfa | nfa | rg | cfg | back".to_string(), false);
         running = false;
         if input.trim() == "dfa" {
             load_dfa();
@@ -47,8 +41,8 @@ fn load() {
             load_nfa();
         } else if input.trim() == "rg" {
             load_rg();
-        } else if input.trim() == "regex" {
-            load_regex();
+        } else if input.trim() == "cfg" {
+            load_cfg();
         } else if input.trim() == "back" {
         } else {
             running = true;

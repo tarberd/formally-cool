@@ -8,14 +8,14 @@ fn state_to_variable(state: &String) -> String {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct RegularGrammar {
+pub struct Grammar {
     pub variables: BTreeSet<String>,
     pub terminals: BTreeSet<String>,
     pub rules: BTreeMap<String, BTreeSet<String>>,
     pub start_variable: String,
 }
 
-impl RegularGrammar {
+impl Grammar {
     pub fn printTable(&self){
         println!("rules\n{:#?}", self.rules);
         println!("variables\n{:#?}", self.variables);
@@ -24,7 +24,7 @@ impl RegularGrammar {
 }
 
 
-impl From<&DeterministicFiniteAutomata> for RegularGrammar {
+impl From<&DeterministicFiniteAutomata> for Grammar {
     fn from(automata: &DeterministicFiniteAutomata) -> Self {
         let mut variables = BTreeSet::new();
         let mut terminals = BTreeSet::new();
@@ -56,7 +56,7 @@ impl From<&DeterministicFiniteAutomata> for RegularGrammar {
             }
         }
 
-        RegularGrammar {
+        Grammar {
             variables: variables,
             terminals: terminals,
             rules: rules,

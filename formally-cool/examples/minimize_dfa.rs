@@ -92,7 +92,7 @@ fn main() {
 
     let start_variable = String::from("<S`>");
 
-    let grammar = RegularGrammar {
+    let grammar = Grammar {
         variables: variables,
         terminals: terminals,
         rules: rules,
