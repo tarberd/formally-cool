@@ -15,29 +15,51 @@ pub struct DeterministicFiniteAutomata {
 pub fn state_to_set(state: &String) -> BTreeSet<String> {
     let mut set = BTreeSet::new();
 
-    let mut count = 0;
+    if state == "" {
+        set.insert(state.clone());
+    } else if state.chars().next().unwrap() != '(' {
+        set.insert(state.as_str()[0..state.len()].to_owned());
+    } else if state.len() == 2 {
+        set.insert("".to_owned());
+    } else {
+        let naked_state = state.get(1..(state.len() - 1)).unwrap();
 
-    let mut start = 0;
-    let mut end = 0;
+        let mut bracket_count = 0;
 
-    for index in 0..state.len() {
-        match state.chars().nth(index) {
-            Some(letter) => {
-                if count == 0 {
-                    if index == 0 && letter != '(' {
-                        start = index;
-                        end = state.len();
-                        set.insert(state.as_str()[start..end].to_owned());
-                    } else if letter == '(' {
-                        start = index + 1;
-                    } else if letter == ')' {
-                        end = index;
-                        set.insert(state.as_str()[start..end].to_owned());
+        let mut start = 0;
+        let mut end = 0;
+
+        for index in 0..naked_state.len() {
+            let letter = naked_state.get(index..(index + 1)).unwrap();
+
+            if bracket_count == 0 {
+                if letter == "," {
+                    end = index;
+                    set.insert(naked_state[start..end].to_owned());
+                    start = index + 2;
+                }
+                if index == naked_state.len() - 1 {
+                    end = index + 1;
+                    set.insert(naked_state[start..end].to_owned());
+                }
+                if letter == "(" {
+                    bracket_count += 1;
+                    start = index;
+                }
+            } else {
+                if letter == "(" {
+                    bracket_count += 1;
+                }
+                if letter == ")" {
+                    bracket_count -= 1;
+
+                    if bracket_count == 0 {
+                        end = index + 1;
+                        set.insert(naked_state[start..end].to_owned());
                     }
                 }
             }
-            None => (),
-        };
+        }
     }
 
     set
@@ -556,6 +578,14 @@ mod tests {
 
     #[test]
     fn state_to_set() {
+        let state = String::from("");
+
+        let set = super::state_to_set(&state);
+
+        let correct_set = [state].iter().cloned().collect();
+
+        assert_eq!(set, correct_set);
+
         let state = String::from("q0");
 
         let set = super::state_to_set(&state);
@@ -588,6 +618,63 @@ mod tests {
             .iter()
             .cloned()
             .collect();
+
+        assert_eq!(set, correct_set);
+
+        let state = String::from("(())");
+
+        let set = super::state_to_set(&state);
+
+        let correct_set = [String::from("()")].iter().cloned().collect();
+
+        assert_eq!(set, correct_set);
+
+        let state = String::from("((q0))");
+
+        let set = super::state_to_set(&state);
+
+        let correct_set = [String::from("(q0)")].iter().cloned().collect();
+
+        assert_eq!(set, correct_set);
+
+        let state = String::from("((q0), (q1))");
+
+        let set = super::state_to_set(&state);
+
+        let correct_set = [String::from("(q0)"), String::from("(q1)")]
+            .iter()
+            .cloned()
+            .collect();
+
+        assert_eq!(set, correct_set);
+
+        let state = String::from("((q0), (q1), q2)");
+
+        let set = super::state_to_set(&state);
+
+        let correct_set = [
+            String::from("(q0)"),
+            String::from("(q1)"),
+            String::from("q2"),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+
+        assert_eq!(set, correct_set);
+
+        let state = String::from("((q0, q1, (q2)), (q1, (q2, q3, (q3))), q2)");
+
+        let set = super::state_to_set(&state);
+
+        let correct_set = [
+            String::from("(q0, q1, (q2))"),
+            String::from("(q1, (q2, q3, (q3)))"),
+            String::from("q2"),
+        ]
+        .iter()
+        .cloned()
+        .collect();
 
         assert_eq!(set, correct_set);
     }
