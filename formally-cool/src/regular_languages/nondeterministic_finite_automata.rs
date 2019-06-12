@@ -1,3 +1,4 @@
+use super::deterministic_finite_automata::DeterministicFiniteAutomata;
 use super::regular_grammar::RegularGrammar;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -69,6 +70,39 @@ impl From<&RegularGrammar> for NondeterministicFiniteAutomata {
             alphabet: alphabet,
             transition_function: transition_function,
             start_state: symbol_to_state(&regular_grammar.start_variable),
+            accept_states: accept_states,
+        }
+    }
+}
+
+impl From<&DeterministicFiniteAutomata> for NondeterministicFiniteAutomata {
+    fn from(dfa: &DeterministicFiniteAutomata) -> Self {
+        let states = dfa.alphabet.clone();
+        let alphabet = dfa.alphabet.clone();
+        let mut transition_function = BTreeMap::new();
+        let accept_states = dfa.accept_states.clone();
+
+        for state in &states {
+            for letter in &alphabet {
+                match dfa
+                    .transition_function
+                    .get(&(state.clone(), letter.clone()))
+                {
+                    Some(out_state) => {
+                        let mut out_set = BTreeSet::new();
+                        out_set.insert(out_state.clone());
+                        transition_function.insert((state.clone(), letter.clone()), out_set);
+                    }
+                    None => (),
+                }
+            }
+        }
+
+        NondeterministicFiniteAutomata {
+            states: states,
+            alphabet: alphabet,
+            transition_function: transition_function,
+            start_state: dfa.start_state.clone(),
             accept_states: accept_states,
         }
     }

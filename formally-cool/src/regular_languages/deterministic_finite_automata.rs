@@ -12,8 +12,35 @@ pub struct DeterministicFiniteAutomata {
     pub accept_states: BTreeSet<String>,
 }
 
-pub fn state_to_set(_state: &String) -> BTreeSet<String> {
-    BTreeSet::new()
+pub fn state_to_set(state: &String) -> BTreeSet<String> {
+    let mut set = BTreeSet::new();
+
+    let mut count = 0;
+
+    let mut start = 0;
+    let mut end = 0;
+
+    for index in 0..state.len() {
+        match state.chars().nth(index) {
+            Some(letter) => {
+                if count == 0 {
+                    if index == 0 && letter != '(' {
+                        start = index;
+                        end = state.len();
+                        set.insert(state.as_str()[start..end].to_owned());
+                    } else if letter == '(' {
+                        start = index + 1;
+                    } else if letter == ')' {
+                        end = index;
+                        set.insert(state.as_str()[start..end].to_owned());
+                    }
+                }
+            }
+            None => (),
+        };
+    }
+
+    set
 }
 
 pub fn set_to_state(set: &BTreeSet<String>) -> String {
@@ -302,6 +329,22 @@ impl DeterministicFiniteAutomata {
         let dfa = dfa.remove_non_productive_states();
         dfa.remove_equivalent_states()
     }
+
+    // pub fn union(&self, other: &Self) -> Self {
+    //     let mut states = BTreeSet::new();
+    //     let alphabet = self.alphabet.clone();
+    //     let mut transition_function = BTreeMap::new();
+    //     let mut start_state = String::new();
+    //     let mut accept_states = BTreeSet::new();
+    //
+    //     DeterministicFiniteAutomata {
+    //         states: states,
+    //         alphabet: alphabet,
+    //         transition_function: transition_function,
+    //         start_state: start_state,
+    //         accept_states: accept_states,
+    //     }
+    // }
 }
 
 fn powerset<T: Clone>(slice: &[T]) -> Vec<Vec<T>> {
@@ -347,10 +390,10 @@ impl From<&NondeterministicFiniteAutomata> for DeterministicFiniteAutomata {
             let power_state_set_vec = powerset(&state_set_vec);
 
             for vec in &power_state_set_vec {
-                let mut state_name = String::new();
-                for state in vec {
-                    state_name = state_name + state + ".";
-                }
+                let set: BTreeSet<_> = vec.iter().cloned().collect();
+
+                let state_name = set_to_state(&set);
+
                 states.insert(state_name);
             }
         }
@@ -479,6 +522,75 @@ impl From<&NondeterministicFiniteAutomata> for DeterministicFiniteAutomata {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn set_to_state() {
+        let states = [
+            "q0".to_string(),
+            "q1".to_string(),
+            "q2".to_string(),
+            "q3".to_string(),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+
+        let state = super::set_to_state(&states);
+
+        assert_eq!(state, String::from("(q0, q1, q2, q3)"));
+
+        let states = [
+            "".to_string(),
+            "1".to_string(),
+            "(2, 3)".to_string(),
+            "(2, 3, (2))".to_string(),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+
+        let state = super::set_to_state(&states);
+
+        assert_eq!(state, String::from("(, (2, 3), (2, 3, (2)), 1)"));
+    }
+
+    #[test]
+    fn state_to_set() {
+        let state = String::from("q0");
+
+        let set = super::state_to_set(&state);
+
+        let correct_set = [state].iter().cloned().collect();
+
+        assert_eq!(set, correct_set);
+
+        let state = String::from("()");
+
+        let set = super::state_to_set(&state);
+
+        let correct_set = [String::from("")].iter().cloned().collect();
+
+        assert_eq!(set, correct_set);
+
+        let state = String::from("(q0)");
+
+        let set = super::state_to_set(&state);
+
+        let correct_set = [String::from("q0")].iter().cloned().collect();
+
+        assert_eq!(set, correct_set);
+
+        let state = String::from("(q0, q1)");
+
+        let set = super::state_to_set(&state);
+
+        let correct_set = [String::from("q0"), String::from("q1")]
+            .iter()
+            .cloned()
+            .collect();
+
+        assert_eq!(set, correct_set);
+    }
 
     #[test]
     fn remove_unreachable_states() {
