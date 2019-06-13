@@ -21,9 +21,9 @@ fn main() {
         accept_states: [String::from("q0")].iter().cloned().collect(),
     };
 
-    println!("{:#?}", automata);
+    println!("{}", automata);
 
     let regular_grammar = RegularGrammar::from(&automata);
 
-    println!("{:#?}", regular_grammar);
+    println!("{}", regular_grammar);
 }

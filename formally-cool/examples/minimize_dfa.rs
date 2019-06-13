@@ -99,7 +99,7 @@ fn main() {
         start_variable: start_variable,
     };
 
-    println!("{:#?}", grammar);
+    println!("{}", grammar);
 
     let automata = NondeterministicFiniteAutomata::from(&grammar);
 
@@ -111,5 +111,5 @@ fn main() {
 
     let minimized = automata.minimize();
 
-    println!("{:#?}", minimized);
+    println!("{}", minimized);
 }

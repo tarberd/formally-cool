@@ -23,9 +23,9 @@ fn main() {
 
     let regular_grammar = RegularGrammar::from(&automata);
 
-    println!("{:#?}", regular_grammar);
+    println!("{}", regular_grammar);
 
     let automata = NondeterministicFiniteAutomata::from(&regular_grammar);
 
-    println!("{:#?}", automata);
+    println!("{}", automata);
 }

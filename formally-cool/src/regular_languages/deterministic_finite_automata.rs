@@ -21,10 +21,13 @@ impl fmt::Display for DeterministicFiniteAutomata {
             .states
             .iter()
             .cloned()
-            .fold(
-                String::from(""),
-                |bigger, next| if bigger < next { next } else { bigger },
-            )
+            .fold(String::from(""), |bigger, next| {
+                if bigger.len() < next.len() {
+                    next
+                } else {
+                    bigger
+                }
+            })
             .len()
             + 3;
 
@@ -32,7 +35,7 @@ impl fmt::Display for DeterministicFiniteAutomata {
             f,
             "{:d$}{:width$}",
             "",
-            "",
+            "g",
             d = decoration_spacing,
             width = table_spacing,
         );
