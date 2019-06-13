@@ -382,11 +382,14 @@ impl DeterministicFiniteAutomata {
             }
         }
 
-        for equivalence_class in &equivalence_classes {
+        for equivalence_class in dbg!(&equivalence_classes) {
             for letter in &alphabet {
                 let state_string = set_to_state(equivalence_class);
                 states.insert(state_string.clone());
-                let state = equivalence_class.iter().cloned().last().unwrap();
+                let state = match equivalence_class.iter().cloned().last() {
+                    Some(state) => state.clone(),
+                    None => String::from(""),
+                };
 
                 match self
                     .transition_function
