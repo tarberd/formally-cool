@@ -163,7 +163,7 @@ impl From<&RegularGrammar> for NondeterministicFiniteAutomata {
 
 impl From<&DeterministicFiniteAutomata> for NondeterministicFiniteAutomata {
     fn from(dfa: &DeterministicFiniteAutomata) -> Self {
-        let states = dfa.alphabet.clone();
+        let states = dfa.states.clone();
         let alphabet = dfa.alphabet.clone();
         let mut transition_function = BTreeMap::new();
         let accept_states = dfa.accept_states.clone();
@@ -189,6 +189,28 @@ impl From<&DeterministicFiniteAutomata> for NondeterministicFiniteAutomata {
             alphabet: alphabet,
             transition_function: transition_function,
             start_state: dfa.start_state.clone(),
+            accept_states: accept_states,
+        }
+    }
+}
+
+impl NondeterministicFiniteAutomata {
+    pub fn union(&self, other: &Self) -> Self {
+        let states = self.states.union(&other.states).cloned().collect();
+        let alphabet = self.alphabet.union(&other.alphabet).cloned().collect();
+        let transition_function = BTreeMap::new();
+        let start_state = String::from("new_start_state");
+        let accept_states = self
+            .accept_states
+            .union(&other.accept_states)
+            .cloned()
+            .collect();
+
+        NondeterministicFiniteAutomata {
+            states: states,
+            alphabet: alphabet,
+            transition_function: transition_function,
+            start_state: start_state,
             accept_states: accept_states,
         }
     }

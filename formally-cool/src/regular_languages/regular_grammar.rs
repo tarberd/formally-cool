@@ -33,24 +33,24 @@ impl fmt::Display for RegularGrammar {
         };
         write!(f, "\n")?;
 
-        for variable in &self.variables {
-            if *variable != self.start_variable {
-                write!(f, "{} => ", variable)?;
-                match self.rules.get(variable) {
-                    Some(set) => {
-                        for s in set {
-                            if s != set.iter().last().unwrap() {
-                                write!(f, "{} | ", s)?;
-                            } else {
-                                write!(f, "{}", s)?;
-                            }
+        let mut variables = self.variables.clone();
+        variables.remove(&self.start_variable);
+        for variable in &variables {
+            write!(f, "{} => ", variable)?;
+            match self.rules.get(variable) {
+                Some(set) => {
+                    for s in set {
+                        if s != set.iter().last().unwrap() {
+                            write!(f, "{} | ", s)?;
+                        } else {
+                            write!(f, "{}", s)?;
                         }
                     }
-                    None => write!(f, "-")?,
-                };
-                if variable != self.variables.iter().last().unwrap() {
-                    write!(f, "\n")?;
                 }
+                None => write!(f, "-")?,
+            };
+            if variable != variables.iter().last().unwrap() {
+                write!(f, "\n")?;
             }
         }
 

@@ -426,21 +426,16 @@ impl DeterministicFiniteAutomata {
         dfa.remove_equivalent_states()
     }
 
-    // pub fn union(&self, other: &Self) -> Self {
-    //     let mut states = BTreeSet::new();
-    //     let alphabet = self.alphabet.clone();
-    //     let mut transition_function = BTreeMap::new();
-    //     let mut start_state = String::new();
-    //     let mut accept_states = BTreeSet::new();
-    //
-    //     DeterministicFiniteAutomata {
-    //         states: states,
-    //         alphabet: alphabet,
-    //         transition_function: transition_function,
-    //         start_state: start_state,
-    //         accept_states: accept_states,
-    //     }
-    // }
+    pub fn union(&self, other: &Self) -> Self {
+        let self_as_nfa = NondeterministicFiniteAutomata::from(self);
+        let other_as_nfa = NondeterministicFiniteAutomata::from(other);
+
+        let union_as_nfa = self_as_nfa.union(&other_as_nfa);
+
+        let union_as_dfa = DeterministicFiniteAutomata::from(&union_as_nfa);
+
+        union_as_dfa.minimize()
+    }
 }
 
 fn powerset<T: Clone>(slice: &[T]) -> Vec<Vec<T>> {
