@@ -437,6 +437,36 @@ impl DeterministicFiniteAutomata {
 
         union_as_dfa.minimize()
     }
+
+    pub fn complement(&self) -> Self {
+        DeterministicFiniteAutomata {
+            states: self.states.clone(),
+            alphabet: self.alphabet.clone(),
+            transition_function: self.transition_function.clone(),
+            start_state: self.start_state.clone(),
+            accept_states: self
+                .states
+                .difference(&self.accept_states)
+                .cloned()
+                .collect(),
+        }
+    }
+
+    pub fn intersection(&self, other: &Self) -> Self {
+        let self_complement = self.complement();
+        let other_complement = other.complement();
+
+        let self_as_nfa = NondeterministicFiniteAutomata::from(&self_complement);
+        let other_as_nfa = NondeterministicFiniteAutomata::from(&other_complement);
+
+        let union_as_nfa = self_as_nfa.union(&other_as_nfa);
+
+        let union_as_dfa = DeterministicFiniteAutomata::from(&union_as_nfa);
+
+        let union_complement = union_as_dfa.complement();
+
+        union_complement.minimize()
+    }
 }
 
 fn powerset<T: Clone>(slice: &[T]) -> Vec<Vec<T>> {

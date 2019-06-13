@@ -118,10 +118,16 @@ impl From<&RegularGrammar> for NondeterministicFiniteAutomata {
             alphabet.insert(terminal.clone());
         }
 
-        let final_state = String::from("accept");
+        let mut final_state = String::from("accept_");
 
-        states.insert(final_state.clone());
-        accept_states.insert(final_state.clone());
+        for i in 0.. {
+            final_state = String::from("accept_") + &i.to_string();
+            if !states.contains(&final_state) {
+                states.insert(final_state.clone());
+                accept_states.insert(final_state.clone());
+                break;
+            }
+        }
 
         for state in &states {
             for letter in &alphabet {
