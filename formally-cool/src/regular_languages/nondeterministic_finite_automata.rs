@@ -163,7 +163,7 @@ impl From<&RegularGrammar> for NondeterministicFiniteAutomata {
 
 impl From<&DeterministicFiniteAutomata> for NondeterministicFiniteAutomata {
     fn from(dfa: &DeterministicFiniteAutomata) -> Self {
-        let states = dfa.alphabet.clone();
+        let states = dfa.states.clone();
         let alphabet = dfa.alphabet.clone();
         let mut transition_function = BTreeMap::new();
         let accept_states = dfa.accept_states.clone();
@@ -189,6 +189,70 @@ impl From<&DeterministicFiniteAutomata> for NondeterministicFiniteAutomata {
             alphabet: alphabet,
             transition_function: transition_function,
             start_state: dfa.start_state.clone(),
+            accept_states: accept_states,
+        }
+    }
+}
+
+impl NondeterministicFiniteAutomata {
+    pub fn union(&self, other: &Self) -> Self {
+        let mut states: BTreeSet<String> = self.states.union(&other.states).cloned().collect();
+        let alphabet: BTreeSet<String> = self.alphabet.union(&other.alphabet).cloned().collect();
+        let mut transition_function = BTreeMap::new();
+        let accept_states = self
+            .accept_states
+            .union(&other.accept_states)
+            .cloned()
+            .collect();
+
+        let mut start_state = String::from("q");
+
+        for i in 0.. {
+            start_state = String::from("q") + &i.to_string();
+            if !states.contains(&start_state) {
+                states.insert(start_state.clone());
+                break;
+            }
+        }
+
+        transition_function.insert(
+            (start_state.clone(), String::from("&")),
+            [self.start_state.clone(), other.start_state.clone()]
+                .iter()
+                .cloned()
+                .collect(),
+        );
+
+        for state in &states {
+            for letter in &alphabet {
+                let self_set = match self
+                    .transition_function
+                    .get(&(state.clone(), letter.clone()))
+                {
+                    Some(set) => set.clone(),
+                    None => BTreeSet::new(),
+                };
+
+                let other_set = match other
+                    .transition_function
+                    .get(&(state.clone(), letter.clone()))
+                {
+                    Some(set) => set.clone(),
+                    None => BTreeSet::new(),
+                };
+
+                transition_function.insert(
+                    (state.clone(), letter.clone()),
+                    self_set.union(&other_set).cloned().collect(),
+                );
+            }
+        }
+
+        NondeterministicFiniteAutomata {
+            states: states,
+            alphabet: alphabet,
+            transition_function: transition_function,
+            start_state: start_state,
             accept_states: accept_states,
         }
     }

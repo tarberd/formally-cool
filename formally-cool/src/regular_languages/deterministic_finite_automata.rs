@@ -101,19 +101,18 @@ pub fn state_to_set(state: &String) -> BTreeSet<String> {
         let mut bracket_count = 0;
 
         let mut start = 0;
-        let mut end = 0;
 
         for index in 0..naked_state.len() {
             let letter = naked_state.get(index..(index + 1)).unwrap();
 
             if bracket_count == 0 {
                 if letter == "," {
-                    end = index;
+                    let end = index;
                     set.insert(naked_state[start..end].to_owned());
                     start = index + 2;
                 }
                 if index == naked_state.len() - 1 {
-                    end = index + 1;
+                    let end = index + 1;
                     set.insert(naked_state[start..end].to_owned());
                 }
                 if letter == "(" {
@@ -128,7 +127,7 @@ pub fn state_to_set(state: &String) -> BTreeSet<String> {
                     bracket_count -= 1;
 
                     if bracket_count == 0 {
-                        end = index + 1;
+                        let end = index + 1;
                         set.insert(naked_state[start..end].to_owned());
                     }
                 }
@@ -383,30 +382,32 @@ impl DeterministicFiniteAutomata {
         }
 
         for equivalence_class in &equivalence_classes {
-            for letter in &alphabet {
-                let state_string = set_to_state(equivalence_class);
-                states.insert(state_string.clone());
-                let state = equivalence_class.iter().cloned().last().unwrap();
+            if !equivalence_class.is_empty() {
+                for letter in &alphabet {
+                    let state_string = set_to_state(equivalence_class);
+                    states.insert(state_string.clone());
+                    let state = equivalence_class.iter().cloned().last().unwrap();
 
-                match self
-                    .transition_function
-                    .get(&(state.clone(), letter.clone()))
-                {
-                    Some(out_state) => {
-                        let mut out_state_equivalence_class = BTreeSet::new();
+                    match self
+                        .transition_function
+                        .get(&(state.clone(), letter.clone()))
+                    {
+                        Some(out_state) => {
+                            let mut out_state_equivalence_class = BTreeSet::new();
 
-                        for equivalence_class in &equivalence_classes {
-                            if equivalence_class.contains(out_state) {
-                                out_state_equivalence_class = equivalence_class.clone();
+                            for equivalence_class in &equivalence_classes {
+                                if equivalence_class.contains(out_state) {
+                                    out_state_equivalence_class = equivalence_class.clone();
+                                }
                             }
-                        }
 
-                        transition_function.insert(
-                            (state_string.clone(), letter.clone()),
-                            set_to_state(&out_state_equivalence_class),
-                        );
+                            transition_function.insert(
+                                (state_string.clone(), letter.clone()),
+                                set_to_state(&out_state_equivalence_class),
+                            );
+                        }
+                        None => (),
                     }
-                    None => (),
                 }
             }
         }
@@ -426,21 +427,16 @@ impl DeterministicFiniteAutomata {
         dfa.remove_equivalent_states()
     }
 
-    // pub fn union(&self, other: &Self) -> Self {
-    //     let mut states = BTreeSet::new();
-    //     let alphabet = self.alphabet.clone();
-    //     let mut transition_function = BTreeMap::new();
-    //     let mut start_state = String::new();
-    //     let mut accept_states = BTreeSet::new();
-    //
-    //     DeterministicFiniteAutomata {
-    //         states: states,
-    //         alphabet: alphabet,
-    //         transition_function: transition_function,
-    //         start_state: start_state,
-    //         accept_states: accept_states,
-    //     }
-    // }
+    pub fn union(&self, other: &Self) -> Self {
+        let self_as_nfa = NondeterministicFiniteAutomata::from(self);
+        let other_as_nfa = NondeterministicFiniteAutomata::from(other);
+
+        let union_as_nfa = self_as_nfa.union(&other_as_nfa);
+
+        let union_as_dfa = DeterministicFiniteAutomata::from(&union_as_nfa);
+
+        union_as_dfa.minimize()
+    }
 }
 
 fn powerset<T: Clone>(slice: &[T]) -> Vec<Vec<T>> {
