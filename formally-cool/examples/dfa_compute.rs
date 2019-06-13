@@ -21,7 +21,7 @@ fn main() {
     };
 
     println!("DFA for w = z.a");
-    println!("{:#?}", automata);
+    println!("{}", automata);
 
     let input = String::from("babba");
 

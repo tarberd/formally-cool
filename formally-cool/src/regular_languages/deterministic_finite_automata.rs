@@ -2,6 +2,7 @@ use super::nondeterministic_finite_automata::NondeterministicFiniteAutomata;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
+use std::fmt;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DeterministicFiniteAutomata {
@@ -10,6 +11,79 @@ pub struct DeterministicFiniteAutomata {
     pub transition_function: BTreeMap<(String, String), String>,
     pub start_state: String,
     pub accept_states: BTreeSet<String>,
+}
+
+impl fmt::Display for DeterministicFiniteAutomata {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let decoration_spacing = 3;
+
+        let table_spacing = self
+            .states
+            .iter()
+            .cloned()
+            .fold(String::from(""), |bigger, next| {
+                if bigger.len() < next.len() {
+                    next
+                } else {
+                    bigger
+                }
+            })
+            .len()
+            + 3;
+
+        let result = write!(
+            f,
+            "{:d$}{:width$}",
+            "",
+            "g",
+            d = decoration_spacing,
+            width = table_spacing,
+        );
+
+        for letter in &self.alphabet {
+            write!(f, "{:width$}", letter, width = table_spacing)?;
+        }
+        write!(f, "\n")?;
+
+        for state in &self.states {
+            let mut decorations = String::from("");
+            if self.accept_states.contains(state) {
+                decorations += "*";
+            }
+            if *state == self.start_state {
+                decorations += "->";
+            }
+            write!(
+                f,
+                "{:>d$}{:width$}",
+                decorations,
+                state,
+                d = decoration_spacing,
+                width = table_spacing,
+            )?;
+
+            for letter in &self.alphabet {
+                write!(
+                    f,
+                    "{:width$}",
+                    match self
+                        .transition_function
+                        .get(&(state.clone(), letter.clone()))
+                    {
+                        Some(state) => state.clone(),
+                        None => String::from("-"),
+                    },
+                    width = table_spacing,
+                )?;
+            }
+
+            if state != self.states.iter().last().unwrap() {
+                write!(f, "\n")?;
+            }
+        }
+
+        result
+    }
 }
 
 pub fn state_to_set(state: &String) -> BTreeSet<String> {

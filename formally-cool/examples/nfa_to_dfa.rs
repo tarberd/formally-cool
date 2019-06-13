@@ -49,9 +49,9 @@ fn main() {
         accept_states: ["q4".to_string()].iter().cloned().collect(),
     };
 
-    println!("{:#?}", automata);
+    println!("{}", automata);
 
     let automata = DeterministicFiniteAutomata::from(&automata);
 
-    println!("{:#?}", automata);
+    println!("{}", automata);
 }

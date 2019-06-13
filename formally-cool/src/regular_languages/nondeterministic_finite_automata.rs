@@ -1,8 +1,9 @@
-use super::deterministic_finite_automata::DeterministicFiniteAutomata;
+use super::deterministic_finite_automata::{set_to_state, DeterministicFiniteAutomata};
 use super::regular_grammar::RegularGrammar;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
+use std::fmt;
 
 fn symbol_to_state(symbol: &String) -> String {
     symbol[1..(symbol.len() - 1)].to_string()
@@ -15,6 +16,91 @@ pub struct NondeterministicFiniteAutomata {
     pub start_state: String,
     pub transition_function: BTreeMap<(String, String), BTreeSet<String>>,
     pub accept_states: BTreeSet<String>,
+}
+
+impl fmt::Display for NondeterministicFiniteAutomata {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let decoration_spacing = 3;
+
+        let table_spacing = self
+            .transition_function
+            .iter()
+            .fold(String::from(""), |bigger, (_, set)| {
+                if bigger.len() >= set_to_state(&set).len() {
+                    bigger
+                } else {
+                    set_to_state(&set)
+                }
+            })
+            .len()
+            + 3;
+
+        let result = write!(
+            f,
+            "{:d$}{:width$}",
+            "",
+            "g",
+            d = decoration_spacing,
+            width = table_spacing,
+        );
+
+        write!(f, "{:width$}", "&", width = table_spacing)?;
+        for letter in &self.alphabet {
+            write!(f, "{:width$}", letter, width = table_spacing)?;
+        }
+        write!(f, "\n")?;
+
+        for state in &self.states {
+            let mut decorations = String::from("");
+            if self.accept_states.contains(state) {
+                decorations += "*";
+            }
+            if *state == self.start_state {
+                decorations += "->";
+            }
+            write!(
+                f,
+                "{:>d$}{:width$}",
+                decorations,
+                state,
+                d = decoration_spacing,
+                width = table_spacing,
+            )?;
+
+            write!(
+                f,
+                "{:width$}",
+                match self
+                    .transition_function
+                    .get(&(state.clone(), String::from("&")))
+                {
+                    Some(state) => set_to_state(state),
+                    None => String::from("-"),
+                },
+                width = table_spacing,
+            )?;
+            for letter in &self.alphabet {
+                write!(
+                    f,
+                    "{:width$}",
+                    match self
+                        .transition_function
+                        .get(&(state.clone(), letter.clone()))
+                    {
+                        Some(state) => set_to_state(state),
+                        None => String::from("-"),
+                    },
+                    width = table_spacing,
+                )?;
+            }
+
+            if state != self.states.iter().last().unwrap() {
+                write!(f, "\n")?;
+            }
+        }
+
+        result
+    }
 }
 
 impl From<&RegularGrammar> for NondeterministicFiniteAutomata {
