@@ -154,6 +154,54 @@ pub fn set_to_state(set: &BTreeSet<String>) -> String {
     concatenated_state
 }
 
+pub fn make_cartesian_state(left: &String, right: &String) -> String {
+    String::from("(") + left + ", " + right + ")"
+}
+
+pub fn split_cartesian_state(state: &String) -> (String, String) {
+    let mut vec = vec![];
+
+    let naked_state = state.get(1..(state.len() - 1)).unwrap();
+
+    let mut bracket_count = 0;
+
+    let mut start = 0;
+
+    for index in 0..naked_state.len() {
+        let letter = naked_state.get(index..(index + 1)).unwrap();
+
+        if bracket_count == 0 {
+            if letter == "," {
+                let end = index;
+                vec.push(naked_state[start..end].to_owned());
+                start = index + 2;
+            }
+            if index == naked_state.len() - 1 {
+                let end = index + 1;
+                vec.push(naked_state[start..end].to_owned());
+            }
+            if letter == "(" {
+                bracket_count += 1;
+                start = index;
+            }
+        } else {
+            if letter == "(" {
+                bracket_count += 1;
+            }
+            if letter == ")" {
+                bracket_count -= 1;
+
+                if bracket_count == 0 && index == naked_state.len() - 1 {
+                    let end = index + 1;
+                    vec.push(naked_state[start..end].to_owned());
+                }
+            }
+        }
+    }
+
+    (vec[0].clone(), vec[1].clone())
+}
+
 impl DeterministicFiniteAutomata {
     pub fn compute(&self, input: &str) -> bool {
         let mut actual_state = self.start_state.clone();
@@ -428,14 +476,94 @@ impl DeterministicFiniteAutomata {
     }
 
     pub fn union(&self, other: &Self) -> Self {
-        let self_as_nfa = NondeterministicFiniteAutomata::from(self);
-        let other_as_nfa = NondeterministicFiniteAutomata::from(other);
+        let mut states = BTreeSet::new();
 
-        let union_as_nfa = self_as_nfa.union(&other_as_nfa);
+        let alphabet: BTreeSet<String> = self.alphabet.union(&other.alphabet).cloned().collect();
 
-        let union_as_dfa = DeterministicFiniteAutomata::from(&union_as_nfa);
+        let mut transition_function = BTreeMap::new();
 
-        union_as_dfa.minimize()
+        for left in &self.states {
+            for right in &other.states {
+                states.insert(make_cartesian_state(&left, &right));
+
+                for letter in &alphabet {
+                    let left_out = match self
+                        .transition_function
+                        .get(&(left.clone(), letter.clone()))
+                    {
+                        Some(out_state) => out_state.clone(),
+                        None => String::from("-"),
+                    };
+
+                    let right_out = match other
+                        .transition_function
+                        .get(&(right.clone(), letter.clone()))
+                    {
+                        Some(out_state) => out_state.clone(),
+                        None => String::from("-"),
+                    };
+
+                    transition_function.insert(
+                        (make_cartesian_state(&left, &right), letter.clone()),
+                        make_cartesian_state(&left_out, &right_out),
+                    );
+                }
+            }
+        }
+
+        let mut accept_states = BTreeSet::new();
+
+        for state in &states {
+            let split_tuple = split_cartesian_state(state);
+
+            if self.accept_states.contains(&split_tuple.0)
+                || other.accept_states.contains(&split_tuple.1)
+            {
+                accept_states.insert(state.clone());
+            }
+        }
+
+        DeterministicFiniteAutomata {
+            states: states,
+            alphabet: alphabet,
+            transition_function: transition_function,
+            start_state: make_cartesian_state(&self.start_state, &other.start_state),
+            accept_states: accept_states,
+        }
+    }
+
+    pub fn complement(&self) -> Self {
+        DeterministicFiniteAutomata {
+            states: self.states.clone(),
+            alphabet: self.alphabet.clone(),
+            transition_function: self.transition_function.clone(),
+            start_state: self.start_state.clone(),
+            accept_states: self
+                .states
+                .difference(&self.accept_states)
+                .cloned()
+                .collect(),
+        }
+    }
+
+    pub fn intersection(&self, other: &Self) -> Self {
+        let mut union = self.union(other);
+
+        let mut accept_states = BTreeSet::new();
+
+        for state in &union.states {
+            let split_tuple = split_cartesian_state(state);
+
+            if self.accept_states.contains(&split_tuple.0)
+                && other.accept_states.contains(&split_tuple.1)
+            {
+                accept_states.insert(state.clone());
+            }
+        }
+
+        union.accept_states = accept_states;
+
+        union
     }
 }
 
@@ -583,6 +711,42 @@ impl From<&NondeterministicFiniteAutomata> for DeterministicFiniteAutomata {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn cartesian() {
+        let state = String::from("(q0, q0)");
+
+        let tuple = split_cartesian_state(&state);
+
+        assert_eq!(tuple, (String::from("q0"), String::from("q0")));
+
+        let state = String::from("(q0, q1)");
+
+        let tuple = split_cartesian_state(&state);
+
+        assert_eq!(tuple, (String::from("q0"), String::from("q1")));
+
+        let state = String::from("((q0, q1), q0)");
+
+        let tuple = split_cartesian_state(&state);
+
+        assert_eq!(tuple, (String::from("(q0, q1)"), String::from("q0")));
+
+        let state = String::from("((q0, q1), (q0, q1))");
+
+        let tuple = split_cartesian_state(&state);
+
+        assert_eq!(tuple, (String::from("(q0, q1)"), String::from("(q0, q1)")));
+
+        let state = String::from("(((q0, q1)), ((q0, q1)))");
+
+        let tuple = split_cartesian_state(&state);
+
+        assert_eq!(
+            tuple,
+            (String::from("((q0, q1))"), String::from("((q0, q1))"))
+        );
+    }
 
     #[test]
     fn set_to_state() {
@@ -952,5 +1116,124 @@ mod tests {
         let accept_states_result = [String::from("(C, D, E)")].iter().cloned().collect();
 
         assert_eq!(automata.accept_states, accept_states_result);
+    }
+
+    #[test]
+    fn union() {
+        let mut hash = BTreeMap::new();
+
+        hash.insert((String::from("q0"), String::from("a")), String::from("q0"));
+        hash.insert((String::from("q0"), String::from("b")), String::from("q1"));
+        hash.insert((String::from("q1"), String::from("a")), String::from("q1"));
+        hash.insert((String::from("q1"), String::from("b")), String::from("q1"));
+
+        let states = ["q0".to_string(), "q1".to_string()]
+            .iter()
+            .cloned()
+            .collect();
+
+        let alphabet = ["a".to_string(), "b".to_string()].iter().cloned().collect();
+
+        let accept_states = [String::from("q1")].iter().cloned().collect();
+
+        let automata_at_least_one_b = DeterministicFiniteAutomata {
+            states: states,
+            alphabet: alphabet,
+            transition_function: hash,
+            start_state: String::from("q0"),
+            accept_states: accept_states,
+        };
+
+        let mut hash = BTreeMap::new();
+
+        hash.insert((String::from("q0"), String::from("a")), String::from("q1"));
+        hash.insert((String::from("q0"), String::from("b")), String::from("q0"));
+        hash.insert((String::from("q1"), String::from("a")), String::from("q1"));
+        hash.insert((String::from("q1"), String::from("b")), String::from("q1"));
+
+        let states = ["q0".to_string(), "q1".to_string()]
+            .iter()
+            .cloned()
+            .collect();
+
+        let alphabet = ["a".to_string(), "b".to_string()].iter().cloned().collect();
+
+        let accept_states = [String::from("q1")].iter().cloned().collect();
+
+        let automata_at_least_one_a = DeterministicFiniteAutomata {
+            states: states,
+            alphabet: alphabet,
+            transition_function: hash,
+            start_state: String::from("q0"),
+            accept_states: accept_states,
+        };
+
+        let automata_union = automata_at_least_one_a.union(&automata_at_least_one_b);
+
+        let union_states = [
+            "(q0, q0)".to_string(),
+            "(q0, q1)".to_string(),
+            "(q1, q0)".to_string(),
+            "(q1, q1)".to_string(),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+
+        assert_eq!(automata_union.states, union_states);
+
+        let union_alphabet = ["a".to_string(), "b".to_string()].iter().cloned().collect();
+
+        assert_eq!(automata_union.alphabet, union_alphabet);
+
+        let mut union_transition = BTreeMap::new();
+
+        union_transition.insert(
+            (String::from("(q0, q0)"), String::from("a")),
+            String::from("(q1, q0)"),
+        );
+        union_transition.insert(
+            (String::from("(q0, q0)"), String::from("b")),
+            String::from("(q0, q1)"),
+        );
+        union_transition.insert(
+            (String::from("(q0, q1)"), String::from("a")),
+            String::from("(q1, q1)"),
+        );
+        union_transition.insert(
+            (String::from("(q0, q1)"), String::from("b")),
+            String::from("(q0, q1)"),
+        );
+        union_transition.insert(
+            (String::from("(q1, q0)"), String::from("a")),
+            String::from("(q1, q0)"),
+        );
+        union_transition.insert(
+            (String::from("(q1, q0)"), String::from("b")),
+            String::from("(q1, q1)"),
+        );
+        union_transition.insert(
+            (String::from("(q1, q1)"), String::from("a")),
+            String::from("(q1, q1)"),
+        );
+        union_transition.insert(
+            (String::from("(q1, q1)"), String::from("b")),
+            String::from("(q1, q1)"),
+        );
+
+        assert_eq!(automata_union.transition_function, union_transition);
+
+        assert_eq!(automata_union.start_state, String::from("(q0, q0)"));
+
+        let union_accept_states = [
+            "(q0, q1)".to_string(),
+            "(q1, q0)".to_string(),
+            "(q1, q1)".to_string(),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+
+        assert_eq!(automata_union.accept_states, union_accept_states);
     }
 }
