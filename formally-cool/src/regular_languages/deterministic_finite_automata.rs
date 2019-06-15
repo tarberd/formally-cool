@@ -547,19 +547,23 @@ impl DeterministicFiniteAutomata {
     }
 
     pub fn intersection(&self, other: &Self) -> Self {
-        let self_complement = self.complement();
-        let other_complement = other.complement();
+        let mut union = self.union(other);
 
-        let self_as_nfa = NondeterministicFiniteAutomata::from(&self_complement);
-        let other_as_nfa = NondeterministicFiniteAutomata::from(&other_complement);
+        let mut accept_states = BTreeSet::new();
 
-        let union_as_nfa = self_as_nfa.union(&other_as_nfa);
+        for state in &union.states {
+            let split_tuple = split_cartesian_state(state);
 
-        let union_as_dfa = DeterministicFiniteAutomata::from(&union_as_nfa);
+            if self.accept_states.contains(&split_tuple.0)
+                && other.accept_states.contains(&split_tuple.1)
+            {
+                accept_states.insert(state.clone());
+            }
+        }
 
-        let union_complement = union_as_dfa.complement();
+        union.accept_states = accept_states;
 
-        union_complement.minimize()
+        union
     }
 }
 
