@@ -81,6 +81,22 @@ impl Classy {
                         None => println!("Expected id after let expression."),
                     };
                 }
+                "edit" => match tokens.iter().nth(1) {
+                    Some(id) => {
+                        if self.id_to_dfa.contains_key(&id.to_string()) {
+                            match self.id_to_dfa.get_mut(&id.to_string()) {
+                                Some(mut dfa) => {
+                                    Dfa::run(&mut dfa);
+                                    println!("{}", dfa);
+                                }
+                                None => (),
+                            }
+                        } else {
+                            println!("unknown id: {}", id);
+                        }
+                    }
+                    None => println!("Expected id after edit."),
+                },
                 x => {
                     if self.id_to_dfa.contains_key(&x.to_string()) {
                         match self.id_to_dfa.get(&x.to_string()) {

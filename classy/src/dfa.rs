@@ -51,6 +51,48 @@ impl Dfa {
         }
     }
 
+    fn tokens_to_states(tokens: &[&str]) -> BTreeSet<String> {
+        let mut states = BTreeSet::new();
+
+        if tokens.len() != 0 {
+            let mut parentheses_count = 0;
+            let mut state = String::new();
+
+            for index in 0..tokens.len() {
+                let fist_letter = tokens[index].get(0..1).unwrap();
+                let end = tokens[index].len();
+                let last_letter = tokens[index].get((end - 1)..end).unwrap();
+
+                if parentheses_count == 0 {
+                    if fist_letter == "(" {
+                        state += tokens[index];
+
+                        if last_letter == ")" {
+                            states.insert(state.clone());
+                            state = String::new()
+                        } else {
+                            parentheses_count += 1;
+                        }
+                    } else {
+                        states.insert(tokens[index].to_string());
+                    }
+                } else {
+                    state = state + " " + tokens[index];
+                    if last_letter == ")" {
+                        parentheses_count -= 1;
+
+                        if parentheses_count == 0 {
+                            states.insert(state.clone());
+                            state = String::new();
+                        }
+                    }
+                }
+            }
+        }
+
+        states
+    }
+
     fn parse_input(input: &str, dfa: &mut DeterministicFiniteAutomata) -> Result<(), ()> {
         let tokens: Vec<&str> = input.split_whitespace().collect();
 
@@ -60,8 +102,16 @@ impl Dfa {
                 "exit" => return Err(()),
                 "states" => match tokens.iter().nth(1) {
                     Some(operation) => match operation {
-                        &"add" => {}
-                        &"rm" => {}
+                        &"add" => {
+                            let states = Dfa::tokens_to_states(&tokens[2..tokens.len()]);
+                            dfa.states = dfa.states.union(&states).cloned().collect();
+                            println!("{:?}", dfa.states);
+                        }
+                        &"rm" => {
+                            let states = Dfa::tokens_to_states(&tokens[2..tokens.len()]);
+                            dfa.states = dfa.states.difference(&states).cloned().collect();
+                            println!("{:?}", dfa.states);
+                        }
                         x => println!("{} is not a valid operation.", *x),
                     },
                     None => println!("{:?}", dfa.states),
@@ -115,5 +165,88 @@ impl Dfa {
             start_state: String::new(),
             accept_states: BTreeSet::new(),
         }
+    }
+}
+
+mod test {
+    #[test]
+    fn tokens_to_state() {
+        let input = "";
+        let tokens: Vec<&str> = input.split_whitespace().collect();
+
+        let states = super::Dfa::tokens_to_states(&tokens);
+
+        let answer = [].iter().cloned().collect();
+
+        assert_eq!(states, answer);
+
+        let input = "q0";
+        let tokens: Vec<&str> = input.split_whitespace().collect();
+
+        let states = super::Dfa::tokens_to_states(&tokens);
+
+        let answer = [String::from("q0")].iter().cloned().collect();
+
+        assert_eq!(states, answer);
+
+        let input = "q0 q1";
+        let tokens: Vec<&str> = input.split_whitespace().collect();
+
+        let states = super::Dfa::tokens_to_states(&tokens);
+
+        let answer = [String::from("q0"), String::from("q1")]
+            .iter()
+            .cloned()
+            .collect();
+
+        assert_eq!(states, answer);
+
+        let input = "() ()";
+        let tokens: Vec<&str> = input.split_whitespace().collect();
+
+        let states = super::Dfa::tokens_to_states(&tokens);
+
+        let answer = [String::from("()"), String::from("()")]
+            .iter()
+            .cloned()
+            .collect();
+
+        assert_eq!(states, answer);
+
+        let input = "(q1) ((q2))";
+        let tokens: Vec<&str> = input.split_whitespace().collect();
+
+        let states = super::Dfa::tokens_to_states(&tokens);
+
+        let answer = [String::from("(q1)"), String::from("((q2))")]
+            .iter()
+            .cloned()
+            .collect();
+
+        assert_eq!(states, answer);
+
+        let input = "(q1, q2) ((q2))";
+        let tokens: Vec<&str> = input.split_whitespace().collect();
+
+        let states = super::Dfa::tokens_to_states(&tokens);
+
+        let answer = [String::from("(q1, q2)"), String::from("((q2))")]
+            .iter()
+            .cloned()
+            .collect();
+
+        assert_eq!(states, answer);
+
+        let input = "(q1, (q2, (q3))) ((q2), q1)";
+        let tokens: Vec<&str> = input.split_whitespace().collect();
+
+        let states = super::Dfa::tokens_to_states(&tokens);
+
+        let answer = [String::from("((q2), q1)"), String::from("(q1, (q2, (q3)))")]
+            .iter()
+            .cloned()
+            .collect();
+
+        assert_eq!(states, answer);
     }
 }
