@@ -58,6 +58,32 @@ impl Dfa {
             match tokens[0] {
                 "help" => Dfa::help(),
                 "exit" => return Err(()),
+                "states" => match tokens.iter().nth(1) {
+                    Some(operation) => match operation {
+                        &"add" => {}
+                        &"rm" => {}
+                        x => println!("{} is not a valid operation.", *x),
+                    },
+                    None => println!("{:?}", dfa.states),
+                },
+                "alphabet" => match tokens.iter().nth(1) {
+                    Some(operation) => match operation {
+                        &"add" => {
+                            for token in &tokens[2..tokens.len()] {
+                                dfa.alphabet.insert(token.to_string());
+                            }
+                            println!("{:?}", dfa.alphabet);
+                        }
+                        &"rm" => {
+                            for token in &tokens[2..tokens.len()] {
+                                dfa.alphabet.remove(&token.to_string());
+                            }
+                            println!("{:?}", dfa.alphabet);
+                        }
+                        x => println!("{} is not a valid operation.", *x),
+                    },
+                    None => println!("{:?}", dfa.alphabet),
+                },
                 x => {
                     println!("unknown command: {}", x);
                 }
