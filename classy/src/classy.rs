@@ -138,15 +138,15 @@ impl Classy {
                                                                             file,
                                                                         );
                                                                     match serde_yaml::from_reader(reader) {
-                                                                            Ok(dfa) => {
-                                                                                println!("{}", dfa);
-                                                                                self.id_to_dfa
-                                                                                    .insert(id.to_string(), dfa);
-                                                                            }
-                                                                            Err(err) => println!(
-                                                                                "Error parsing file {}: {}",
-                                                                                file_name, err
-                                                                            ),
+                                                                        Ok(dfa) => {
+                                                                            println!("{}", dfa);
+                                                                            self.id_to_dfa
+                                                                                .insert(id.to_string(), dfa);
+                                                                        }
+                                                                        Err(err) => println!(
+                                                                            "Error parsing file {}: {}",
+                                                                            file_name, err
+                                                                        ),
                                                                     };
                                                                 }
                                                                 Err(err) => println!(
@@ -170,15 +170,15 @@ impl Classy {
                                                                             file,
                                                                         );
                                                                     match serde_yaml::from_reader(reader) {
-                                                                            Ok(nfa) => {
-                                                                                println!("{}", nfa);
-                                                                                self.id_to_nfa
-                                                                                    .insert(id.to_string(), nfa);
-                                                                            }
-                                                                            Err(err) => println!(
-                                                                                "Error parsing file {}: {}",
-                                                                                file_name, err
-                                                                            ),
+                                                                        Ok(nfa) => {
+                                                                            println!("{}", nfa);
+                                                                            self.id_to_nfa
+                                                                                .insert(id.to_string(), nfa);
+                                                                        }
+                                                                        Err(err) => println!(
+                                                                            "Error parsing file {}: {}",
+                                                                            file_name, err
+                                                                        ),
                                                                     };
                                                                 }
                                                                 Err(err) => println!(
@@ -293,6 +293,11 @@ impl Classy {
                     } else if self.id_to_nfa.contains_key(&x.to_string()) {
                         match self.id_to_nfa.get(&x.to_string()) {
                             Some(nfa) => println!("{}", nfa),
+                            None => (),
+                        }
+                    } else if self.id_to_rg.contains_key(&x.to_string()) {
+                        match self.id_to_rg.get(&x.to_string()) {
+                            Some(rg) => println!("{}", rg),
                             None => (),
                         }
                     } else {
