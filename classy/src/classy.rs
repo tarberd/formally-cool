@@ -192,6 +192,38 @@ impl Classy {
                                                             *id
                                                         ),
                                                     }
+                                                } else if *x == "rg" {
+                                                    match tokens.iter().nth(5) {
+                                                        Some(file_name) => {
+                                                            match std::fs::File::open(file_name) {
+                                                                Ok(file) => {
+                                                                    let reader =
+                                                                        std::io::BufReader::new(
+                                                                            file,
+                                                                        );
+                                                                    match serde_yaml::from_reader(reader) {
+                                                                        Ok(rg) => {
+                                                                            println!("{}", rg);
+                                                                            self.id_to_rg
+                                                                                .insert(id.to_string(), rg);
+                                                                        }
+                                                                        Err(err) => println!(
+                                                                            "Error parsing file {}: {}",
+                                                                            file_name, err
+                                                                        ),
+                                                                    };
+                                                                }
+                                                                Err(err) => println!(
+                                                                    "Error opening file {}: {}",
+                                                                    file_name, err
+                                                                ),
+                                                            }
+                                                        }
+                                                        None => println!(
+                                                            "Expected file_name after read for {}.",
+                                                            *id
+                                                        ),
+                                                    }
                                                 } else {
                                                     println!("unknown type: {}", *x);
                                                 }
@@ -254,6 +286,26 @@ impl Classy {
                                 },
                                 None => println!("Expected file_name after write for {}.", *id),
                             }
+                        } else if self.id_to_rg.contains_key(&id.to_string()) {
+                            match tokens.iter().nth(2) {
+                                Some(file_name) => match self.id_to_rg.get(&id.to_string()) {
+                                    Some(rg) => match std::fs::File::create(file_name) {
+                                        Ok(file) => {
+                                            let writer = std::io::BufWriter::new(file);
+                                            match serde_yaml::to_writer(writer, &rg) {
+                                                Ok(_) => (),
+                                                Err(err) => println!(
+                                                    "Error writing {} to {}: {}",
+                                                    id, file_name, err
+                                                ),
+                                            }
+                                        }
+                                        Err(e) => println!("error : {:?}", e),
+                                    },
+                                    None => (),
+                                },
+                                None => println!("Expected file_name after write for {}.", *id),
+                            }
                         } else {
                             println!("unknown id: {}", id);
                         }
@@ -275,6 +327,14 @@ impl Classy {
                                 Some(mut nfa) => {
                                     Nfa::run(&mut nfa);
                                     println!("{}", nfa);
+                                }
+                                None => (),
+                            }
+                        } else if self.id_to_rg.contains_key(&id.to_string()) {
+                            match self.id_to_rg.get_mut(&id.to_string()) {
+                                Some(mut rg) => {
+                                    Rg::run(&mut rg);
+                                    println!("{}", rg);
                                 }
                                 None => (),
                             }
