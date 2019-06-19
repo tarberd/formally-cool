@@ -88,6 +88,14 @@ impl Rg {
         }
     }
 
+    fn tokens_to_variables(tokens: [&str]) -> BTreeSet<String> {
+        let variables = BTreeSet::new();
+
+        if tokens.len() != 0 {}
+
+        variables
+    }
+
     fn parse_input(input: &str, rg: &mut RegularGrammar) -> Result<(), ()> {
         let tokens: Vec<&str> = input.split_whitespace().collect();
 
