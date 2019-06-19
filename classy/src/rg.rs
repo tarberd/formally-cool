@@ -95,6 +95,34 @@ impl Rg {
             match tokens[0] {
                 "help" => Rg::help(),
                 "exit" => return Err(()),
+                "variables" | "v" => match tokens.iter().nth(1) {
+                    Some(&"add") => {}
+                    Some(&"rm") => {}
+                    Some(other) => println!("unknown command: {}", other),
+                    None => println!("{:?}", rg.variables),
+                },
+                "terminals" | "t" => match tokens.iter().nth(1) {
+                    Some(&"add") => {
+                        for token in &tokens[2..tokens.len()] {
+                            rg.terminals.insert(token.to_string());
+                        }
+                        println!("{:?}", rg.terminals);
+                    }
+                    Some(&"rm") => {
+                        for token in &tokens[2..tokens.len()] {
+                            rg.terminals.remove(&token.to_string());
+                        }
+                        println!("{:?}", rg.terminals);
+                    }
+                    Some(other) => println!("unknown command: {}", other),
+                    None => println!("{:?}", rg.variables),
+                },
+                "start_variable" | "sv" => match tokens.iter().nth(1) {
+                    Some(&"add") => {}
+                    Some(&"rm") => {}
+                    Some(other) => println!("unknown command: {}", other),
+                    None => println!("{:?}", rg.variables),
+                },
                 x => {
                     println!("unknown command: {}", x);
                 }
