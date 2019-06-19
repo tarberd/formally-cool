@@ -23,10 +23,13 @@ impl Classy {
     fn help() {
         println!("{}", "List of available commands:");
         println!("{:<25}{}", "help", "Show available commands.");
+        println!("{:<25}{}", "exit", "Quit classy.");
         println!(
             "{:<25}{}",
             "let [id] = [expression]", "Store on 'id' value returned by 'expression'."
         );
+        println!("{:<25}{}", "[expression] => new dfa", "Create new DFA.");
+        println!("{:<25}{}", "edit [id]", "Open edit context for [id] object");
     }
 
     fn wait_for_input() -> Result<String, std::io::Error> {

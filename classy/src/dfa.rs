@@ -19,23 +19,34 @@ impl Dfa {
         println!("{}", "List of available commands:");
         println!("{:<25}{}", "help", "Show available commands.");
         println!("{:<25}{}", "exit", "Quit DFA tool.");
-        println!("{:<25}{}", "states", "List states.");
+        println!("{:<25}{}", "(s)states", "Print states.");
         println!(
             "{:<25}{}",
-            "states add q0 q1 ...", "Add space separeted list of states."
+            "(s)states add q0 (q1, q2) ...", "Add space separeted list of states."
         );
         println!(
             "{:<25}{}",
-            "states rm q0 q1 ...", "Remove space separeted list of states."
+            "(s)states rm q0 (q1, q2) ...", "Remove space separeted list of states."
         );
-        println!("{:<25}{}", "alphabet", "List alphabet.");
+        println!("{:<25}{}", "(a)alphabet", "Print alphabet.");
         println!(
             "{:<25}{}",
-            "alphabet add a b ...", "Add space separeted list of letters."
+            "(a)alphabet add a b ...", "Add space separeted list of letters."
         );
         println!(
             "{:<25}{}",
-            "alphabet rm a b ...", "Remove space separeted list of letters."
+            "(a)alphabet rm a b ...", "Remove space separeted list of letters."
+        );
+        println!("{:<25}{}", "(t)transition", "Print transition table.");
+        println!(
+            "{:<25}{}",
+            "(t)transition add [state] ; [letter] -> [state] | [state] ; [letter] -> [state] | ...",
+            "Add list of transitions separeted by '|'."
+        );
+        println!(
+            "{:<25}{}",
+            "(t)transition rm [state] ; [letter] -> [state] | [state] ; [letter] -> [state] | ...",
+            "Remove list of transitions separeted by '|'."
         );
     }
 
@@ -93,6 +104,54 @@ impl Dfa {
         states
     }
 
+    fn tokens_to_transitions(tokens: &[&str]) -> BTreeMap<(String, String), String> {
+        let mut transition_function = BTreeMap::new();
+
+        if tokens.len() != 0 {
+            let mut state = String::new();
+            let mut letter = String::new();
+
+            let mut begin = 0;
+            for index in 0..tokens.len() {
+                if tokens[index] == ";" {
+                    state = Dfa::tokens_to_states(&tokens[begin..index])
+                        .iter()
+                        .cloned()
+                        .next()
+                        .unwrap();
+
+                    begin = index + 1;
+                } else if tokens[index] == "->" {
+                    letter = tokens[begin..index].iter().cloned().collect();
+
+                    begin = index + 1;
+                } else if tokens[index] == "|" {
+                    let out_state = Dfa::tokens_to_states(&tokens[begin..index])
+                        .iter()
+                        .cloned()
+                        .next()
+                        .unwrap();
+
+                    transition_function.insert((state.clone(), letter.clone()), out_state.clone());
+
+                    begin = index + 1;
+                }
+
+                if index == (tokens.len() - 1) {
+                    let out_state = Dfa::tokens_to_states(&tokens[begin..(index + 1)])
+                        .iter()
+                        .cloned()
+                        .next()
+                        .unwrap();
+
+                    transition_function.insert((state.clone(), letter.clone()), out_state.clone());
+                }
+            }
+        }
+
+        transition_function
+    }
+
     fn parse_input(input: &str, dfa: &mut DeterministicFiniteAutomata) -> Result<(), ()> {
         let tokens: Vec<&str> = input.split_whitespace().collect();
 
@@ -100,7 +159,7 @@ impl Dfa {
             match tokens[0] {
                 "help" => Dfa::help(),
                 "exit" => return Err(()),
-                "states" => match tokens.iter().nth(1) {
+                "states" | "s" => match tokens.iter().nth(1) {
                     Some(operation) => match operation {
                         &"add" => {
                             let states = Dfa::tokens_to_states(&tokens[2..tokens.len()]);
@@ -116,7 +175,7 @@ impl Dfa {
                     },
                     None => println!("{:?}", dfa.states),
                 },
-                "alphabet" => match tokens.iter().nth(1) {
+                "alphabet" | "a" => match tokens.iter().nth(1) {
                     Some(operation) => match operation {
                         &"add" => {
                             for token in &tokens[2..tokens.len()] {
@@ -133,6 +192,32 @@ impl Dfa {
                         x => println!("{} is not a valid operation.", *x),
                     },
                     None => println!("{:?}", dfa.alphabet),
+                },
+                "transition" | "t" => match tokens.iter().nth(1) {
+                    Some(operation) => match operation {
+                        &"add" => {
+                            let transitions = Dfa::tokens_to_transitions(&tokens[2..tokens.len()]);
+
+                            for ((state, letter), out_state) in &transitions {
+                                dfa.transition_function
+                                    .insert((state.clone(), letter.clone()), out_state.clone());
+                            }
+
+                            println!("{}", dfa);
+                        }
+                        &"rm" => {
+                            let transitions = Dfa::tokens_to_transitions(&tokens[2..tokens.len()]);
+
+                            for ((state, letter), _) in &transitions {
+                                dfa.transition_function
+                                    .remove(&(state.clone(), letter.clone()));
+                            }
+
+                            println!("{}", dfa);
+                        }
+                        x => println!("{} is not a valid operation.", *x),
+                    },
+                    None => println!("{}", dfa),
                 },
                 x => {
                     println!("unknown command: {}", x);
@@ -169,6 +254,7 @@ impl Dfa {
 }
 
 mod test {
+
     #[test]
     fn tokens_to_state() {
         let input = "";
@@ -248,5 +334,53 @@ mod test {
             .collect();
 
         assert_eq!(states, answer);
+    }
+
+    #[test]
+    fn tokens_to_transitions() {
+        use std::collections::BTreeMap;
+
+        let input = "q0 ; a -> q0";
+        let tokens: Vec<&str> = input.split_whitespace().collect();
+
+        let transitions = super::Dfa::tokens_to_transitions(&tokens);
+
+        let mut answer = BTreeMap::new();
+
+        answer.insert((String::from("q0"), String::from("a")), String::from("q0"));
+
+        assert_eq!(transitions, answer);
+
+        let input = "(q0, q2) ; a -> (q1, q3)";
+        let tokens: Vec<&str> = input.split_whitespace().collect();
+
+        let transitions = super::Dfa::tokens_to_transitions(&tokens);
+
+        let mut answer = BTreeMap::new();
+
+        answer.insert(
+            (String::from("(q0, q2)"), String::from("a")),
+            String::from("(q1, q3)"),
+        );
+
+        assert_eq!(transitions, answer);
+
+        let input = "(q0, q2) ; a -> (q1, q3) | (q0, q2) ; b -> (q1, q3)";
+        let tokens: Vec<&str> = input.split_whitespace().collect();
+
+        let transitions = super::Dfa::tokens_to_transitions(&tokens);
+
+        let mut answer = BTreeMap::new();
+
+        answer.insert(
+            (String::from("(q0, q2)"), String::from("a")),
+            String::from("(q1, q3)"),
+        );
+        answer.insert(
+            (String::from("(q0, q2)"), String::from("b")),
+            String::from("(q1, q3)"),
+        );
+
+        assert_eq!(transitions, answer);
     }
 }
