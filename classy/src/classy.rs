@@ -1,17 +1,23 @@
 use crate::dfa::Dfa;
-use formally_cool::regular_languages::DeterministicFiniteAutomata;
+use crate::nfa::Nfa;
+
+use formally_cool::regular_languages::{
+    DeterministicFiniteAutomata, NondeterministicFiniteAutomata,
+};
 use std::collections::HashMap;
 use std::io;
 use std::io::Write;
 
 pub struct Classy {
     id_to_dfa: HashMap<String, DeterministicFiniteAutomata>,
+    id_to_nfa: HashMap<String, NondeterministicFiniteAutomata>,
 }
 
 impl Classy {
     pub fn new() -> Self {
         Classy {
             id_to_dfa: HashMap::new(),
+            id_to_nfa: HashMap::new(),
         }
     }
 
@@ -38,13 +44,13 @@ impl Classy {
         );
         println!(
             "{:<width$}{}",
-            "[expression] => new dfa",
-            "Create empty DFA.",
+            "[expression] => new [type]",
+            "Create empty object of [type].",
             width = width
         );
         println!(
             "{:<width$}{}",
-            "[expression] => read dfa [file_name]",
+            "[expression] => read [type] [file_name]",
             "Create new object from file.",
             width = width
         );
@@ -52,6 +58,12 @@ impl Classy {
             "{:<width$}{}",
             "write [id] [file_name]",
             "Write object to file.",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
+            "[type] => dfa | nfa",
+            "Types available.",
             width = width
         );
         println!(
@@ -94,6 +106,11 @@ impl Classy {
                                                     Dfa::run(&mut dfa);
                                                     println!("{}", dfa);
                                                     self.id_to_dfa.insert(id.to_string(), dfa);
+                                                } else if *x == "nfa" {
+                                                    let mut nfa = Nfa::new_nfa();
+                                                    Nfa::run(&mut nfa);
+                                                    println!("{}", nfa);
+                                                    self.id_to_nfa.insert(id.to_string(), nfa);
                                                 } else {
                                                     println!("unknown type: {}.", *x);
                                                 }
@@ -190,6 +207,14 @@ impl Classy {
                                 Some(mut dfa) => {
                                     Dfa::run(&mut dfa);
                                     println!("{}", dfa);
+                                }
+                                None => (),
+                            }
+                        } else if self.id_to_nfa.contains_key(&id.to_string()) {
+                            match self.id_to_nfa.get_mut(&id.to_string()) {
+                                Some(mut nfa) => {
+                                    Nfa::run(&mut nfa);
+                                    println!("{}", nfa);
                                 }
                                 None => (),
                             }
