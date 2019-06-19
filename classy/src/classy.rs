@@ -1,8 +1,8 @@
 use crate::dfa::Dfa;
 use crate::nfa::Nfa;
-
+use crate::rg::Rg;
 use formally_cool::regular_languages::{
-    DeterministicFiniteAutomata, NondeterministicFiniteAutomata,
+    DeterministicFiniteAutomata, NondeterministicFiniteAutomata, RegularGrammar,
 };
 use std::collections::HashMap;
 use std::io;
@@ -11,6 +11,7 @@ use std::io::Write;
 pub struct Classy {
     id_to_dfa: HashMap<String, DeterministicFiniteAutomata>,
     id_to_nfa: HashMap<String, NondeterministicFiniteAutomata>,
+    id_to_rg: HashMap<String, RegularGrammar>,
 }
 
 impl Classy {
@@ -18,6 +19,7 @@ impl Classy {
         Classy {
             id_to_dfa: HashMap::new(),
             id_to_nfa: HashMap::new(),
+            id_to_rg: HashMap::new(),
         }
     }
 
@@ -62,7 +64,7 @@ impl Classy {
         );
         println!(
             "{:<width$}{}",
-            "[type] => dfa | nfa",
+            "[type] => dfa | nfa | rg",
             "Types available.",
             width = width
         );
@@ -111,6 +113,11 @@ impl Classy {
                                                     Nfa::run(&mut nfa);
                                                     println!("{}", nfa);
                                                     self.id_to_nfa.insert(id.to_string(), nfa);
+                                                } else if *x == "rg" {
+                                                    let mut rg = Rg::new_rg();
+                                                    Rg::run(&mut rg);
+                                                    println!("{}", rg);
+                                                    self.id_to_rg.insert(id.to_string(), rg);
                                                 } else {
                                                     println!("unknown type: {}.", *x);
                                                 }
@@ -132,6 +139,7 @@ impl Classy {
                                                                         );
                                                                     match serde_yaml::from_reader(reader) {
                                                                             Ok(dfa) => {
+                                                                                println!("{}", dfa);
                                                                                 self.id_to_dfa
                                                                                     .insert(id.to_string(), dfa);
                                                                             }
@@ -163,6 +171,7 @@ impl Classy {
                                                                         );
                                                                     match serde_yaml::from_reader(reader) {
                                                                             Ok(nfa) => {
+                                                                                println!("{}", nfa);
                                                                                 self.id_to_nfa
                                                                                     .insert(id.to_string(), nfa);
                                                                             }
