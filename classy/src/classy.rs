@@ -1,17 +1,23 @@
 use crate::dfa::Dfa;
-use formally_cool::regular_languages::DeterministicFiniteAutomata;
+use crate::nfa::Nfa;
+
+use formally_cool::regular_languages::{
+    DeterministicFiniteAutomata, NondeterministicFiniteAutomata,
+};
 use std::collections::HashMap;
 use std::io;
 use std::io::Write;
 
 pub struct Classy {
     id_to_dfa: HashMap<String, DeterministicFiniteAutomata>,
+    id_to_nfa: HashMap<String, NondeterministicFiniteAutomata>,
 }
 
 impl Classy {
     pub fn new() -> Self {
         Classy {
             id_to_dfa: HashMap::new(),
+            id_to_nfa: HashMap::new(),
         }
     }
 
@@ -38,13 +44,13 @@ impl Classy {
         );
         println!(
             "{:<width$}{}",
-            "[expression] => new dfa",
-            "Create empty DFA.",
+            "[expression] => new [type]",
+            "Create empty object of [type].",
             width = width
         );
         println!(
             "{:<width$}{}",
-            "[expression] => read dfa [file_name]",
+            "[expression] => read [type] [file_name]",
             "Create new object from file.",
             width = width
         );
@@ -52,6 +58,12 @@ impl Classy {
             "{:<width$}{}",
             "write [id] [file_name]",
             "Write object to file.",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
+            "[type] => dfa | nfa",
+            "Types available.",
             width = width
         );
         println!(
@@ -94,6 +106,11 @@ impl Classy {
                                                     Dfa::run(&mut dfa);
                                                     println!("{}", dfa);
                                                     self.id_to_dfa.insert(id.to_string(), dfa);
+                                                } else if *x == "nfa" {
+                                                    let mut nfa = Nfa::new_nfa();
+                                                    Nfa::run(&mut nfa);
+                                                    println!("{}", nfa);
+                                                    self.id_to_nfa.insert(id.to_string(), nfa);
                                                 } else {
                                                     println!("unknown type: {}.", *x);
                                                 }
@@ -117,6 +134,37 @@ impl Classy {
                                                                             Ok(dfa) => {
                                                                                 self.id_to_dfa
                                                                                     .insert(id.to_string(), dfa);
+                                                                            }
+                                                                            Err(err) => println!(
+                                                                                "Error parsing file {}: {}",
+                                                                                file_name, err
+                                                                            ),
+                                                                    };
+                                                                }
+                                                                Err(err) => println!(
+                                                                    "Error opening file {}: {}",
+                                                                    file_name, err
+                                                                ),
+                                                            }
+                                                        }
+                                                        None => println!(
+                                                            "Expected file_name after read for {}.",
+                                                            *id
+                                                        ),
+                                                    }
+                                                } else if *x == "nfa" {
+                                                    match tokens.iter().nth(5) {
+                                                        Some(file_name) => {
+                                                            match std::fs::File::open(file_name) {
+                                                                Ok(file) => {
+                                                                    let reader =
+                                                                        std::io::BufReader::new(
+                                                                            file,
+                                                                        );
+                                                                    match serde_yaml::from_reader(reader) {
+                                                                            Ok(nfa) => {
+                                                                                self.id_to_nfa
+                                                                                    .insert(id.to_string(), nfa);
                                                                             }
                                                                             Err(err) => println!(
                                                                                 "Error parsing file {}: {}",
@@ -177,6 +225,26 @@ impl Classy {
                                 },
                                 None => println!("Expected file_name after write for {}.", *id),
                             }
+                        } else if self.id_to_nfa.contains_key(&id.to_string()) {
+                            match tokens.iter().nth(2) {
+                                Some(file_name) => match self.id_to_nfa.get(&id.to_string()) {
+                                    Some(nfa) => match std::fs::File::create(file_name) {
+                                        Ok(file) => {
+                                            let writer = std::io::BufWriter::new(file);
+                                            match serde_yaml::to_writer(writer, &nfa) {
+                                                Ok(_) => (),
+                                                Err(err) => println!(
+                                                    "Error writing {} to {}: {}",
+                                                    id, file_name, err
+                                                ),
+                                            }
+                                        }
+                                        Err(e) => println!("error : {:?}", e),
+                                    },
+                                    None => (),
+                                },
+                                None => println!("Expected file_name after write for {}.", *id),
+                            }
                         } else {
                             println!("unknown id: {}", id);
                         }
@@ -193,6 +261,14 @@ impl Classy {
                                 }
                                 None => (),
                             }
+                        } else if self.id_to_nfa.contains_key(&id.to_string()) {
+                            match self.id_to_nfa.get_mut(&id.to_string()) {
+                                Some(mut nfa) => {
+                                    Nfa::run(&mut nfa);
+                                    println!("{}", nfa);
+                                }
+                                None => (),
+                            }
                         } else {
                             println!("unknown id: {}", id);
                         }
@@ -203,6 +279,11 @@ impl Classy {
                     if self.id_to_dfa.contains_key(&x.to_string()) {
                         match self.id_to_dfa.get(&x.to_string()) {
                             Some(dfa) => println!("{}", dfa),
+                            None => (),
+                        }
+                    } else if self.id_to_nfa.contains_key(&x.to_string()) {
+                        match self.id_to_nfa.get(&x.to_string()) {
+                            Some(nfa) => println!("{}", nfa),
                             None => (),
                         }
                     } else {
