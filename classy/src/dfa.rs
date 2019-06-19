@@ -16,48 +16,93 @@ impl Dfa {
     }
 
     fn help() {
+        let width = 40;
         println!("{}", "List of available commands:");
-        println!("{:<25}{}", "help", "Show available commands.");
-        println!("{:<25}{}", "exit", "Quit DFA tool.");
-        println!("{:<25}{}", "(s)states", "Print states.");
         println!(
-            "{:<25}{}",
-            "(s)states add q0 (q1, q2) ...", "Add space separeted list of states."
+            "{:<width$}{}",
+            "help",
+            "Show available commands.",
+            width = width
+        );
+        println!("{:<width$}{}", "exit", "Quit DFA tool.", width = width);
+        println!("{:<width$}{}", "(s)states", "Print states.", width = width);
+        println!(
+            "{:<width$}{}",
+            "(s)states add q0 (q1, q2) ...",
+            "Add space separeted list of states.",
+            width = width
         );
         println!(
-            "{:<25}{}",
-            "(s)states rm q0 (q1, q2) ...", "Remove space separeted list of states."
-        );
-        println!("{:<25}{}", "(a)alphabet", "Print alphabet.");
-        println!(
-            "{:<25}{}",
-            "(a)alphabet add a b ...", "Add space separeted list of letters."
+            "{:<width$}{}",
+            "(s)states rm q0 (q1, q2) ...",
+            "Remove space separeted list of states.",
+            width = width
         );
         println!(
-            "{:<25}{}",
-            "(a)alphabet rm a b ...", "Remove space separeted list of letters."
+            "{:<width$}{}",
+            "(a)alphabet",
+            "Print alphabet.",
+            width = width
         );
-        println!("{:<25}{}", "(t)transition", "Print transition table.");
         println!(
-            "{:<25}{}",
+            "{:<width$}{}",
+            "(a)alphabet add a b ...",
+            "Add space separeted list of letters.",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
+            "(a)alphabet rm a b ...",
+            "Remove space separeted list of letters.",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
+            "(t)transition",
+            "Print transition table.",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
             "(t)transition add [state] ; [letter] -> [state] | [state] ; [letter] -> [state] | ...",
-            "Add list of transitions separeted by '|'."
+            "\n\tAdd list of transitions separeted by '|'.",
+            width = width
         );
         println!(
-            "{:<25}{}",
+            "{:<width$}{}",
             "(t)transition rm [state] ; [letter] -> [state] | [state] ; [letter] -> [state] | ...",
-            "Remove list of transitions separeted by '|'."
-        );
-        println!("{:<25}{}", "(ss)start_state", "Print start state.");
-        println!("{:<25}{}", "(ss)start_state set q0", "Set start_state.");
-        println!("{:<25}{}", "(as)accept_states", "Print accept states.");
-        println!(
-            "{:<25}{}",
-            "(as)accept_states add q0 (q1, q2) ...", "Add space separeted list of states."
+            "\n\tRemove list of transitions separeted by '|'.",
+            width = width
         );
         println!(
-            "{:<25}{}",
-            "(as)accept_states rm q0 (q1, q2) ...", "Remove space separeted list of states."
+            "{:<width$}{}",
+            "(ss)start_state",
+            "Print start state.",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
+            "(ss)start_state set q0",
+            "Set start_state.",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
+            "(as)accept_states",
+            "Print accept states.",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
+            "(as)accept_states add q0 (q1, q2) ...",
+            "Add space separeted list of states.",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
+            "(as)accept_states rm q0 (q1, q2) ...",
+            "Remove space separeted list of states.",
+            width = width
         );
     }
 

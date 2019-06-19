@@ -21,21 +21,51 @@ impl Classy {
     }
 
     fn help() {
+        let width = 40;
         println!("{}", "List of available commands:");
-        println!("{:<25}{}", "help", "Show available commands.");
-        println!("{:<25}{}", "exit", "Quit classy.");
         println!(
-            "{:<25}{}",
-            "let [id] = [expression]", "Store on 'id' value returned by 'expression'."
+            "{:<width$}{}",
+            "help",
+            "Show available commands.",
+            width = width
         );
-        println!("{:<25}{}", "[expression] => new dfa", "Create new DFA.");
-        println!("{:<25}{}", "edit [id]", "Open edit context for [id] object");
+        println!("{:<width$}{}", "exit", "Quit classy.", width = width);
+        println!(
+            "{:<width$}{}",
+            "let [id] = [expression]",
+            "Store on 'id' value returned by 'expression'.",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
+            "[expression] => new dfa",
+            "Create empty DFA.",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
+            "[expression] => read dfa [file_name]",
+            "Create new object from file.",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
+            "write [id] [file_name]",
+            "Write object to file.",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
+            "edit [id]",
+            "Open edit context for [id] object.",
+            width = width
+        );
     }
 
     fn wait_for_input() -> Result<String, std::io::Error> {
         print!("{}", ">>> ");
 
-        io::stdout().flush().expect("Error flushing stdout");
+        io::stdout().flush().expect("Error flushing stdout.");
 
         let mut input = String::new();
         match io::stdin().read_line(&mut input) {
@@ -65,6 +95,47 @@ impl Classy {
                                                     println!("{}", dfa);
                                                     self.id_to_dfa.insert(id.to_string(), dfa);
                                                 } else {
+                                                    println!("unknown type: {}.", *x);
+                                                }
+                                            }
+                                            None => {
+                                                println!("Expected type after new for {}.", *id)
+                                            }
+                                        },
+                                        Some(&"read") => match tokens.iter().nth(4) {
+                                            Some(x) => {
+                                                if *x == "dfa" {
+                                                    match tokens.iter().nth(5) {
+                                                        Some(file_name) => {
+                                                            match std::fs::File::open(file_name) {
+                                                                Ok(file) => {
+                                                                    let reader =
+                                                                        std::io::BufReader::new(
+                                                                            file,
+                                                                        );
+                                                                    match serde_yaml::from_reader(reader) {
+                                                                            Ok(dfa) => {
+                                                                                self.id_to_dfa
+                                                                                    .insert(id.to_string(), dfa);
+                                                                            }
+                                                                            Err(err) => println!(
+                                                                                "Error parsing file {}: {}",
+                                                                                file_name, err
+                                                                            ),
+                                                                    };
+                                                                }
+                                                                Err(err) => println!(
+                                                                    "Error opening file {}: {}",
+                                                                    file_name, err
+                                                                ),
+                                                            }
+                                                        }
+                                                        None => println!(
+                                                            "Expected file_name after read for {}.",
+                                                            *id
+                                                        ),
+                                                    }
+                                                } else {
                                                     println!("unknown type: {}", *x);
                                                 }
                                             }
@@ -84,6 +155,34 @@ impl Classy {
                         None => println!("Expected id after let expression."),
                     };
                 }
+                "write" => match tokens.iter().nth(1) {
+                    Some(id) => {
+                        if self.id_to_dfa.contains_key(&id.to_string()) {
+                            match tokens.iter().nth(2) {
+                                Some(file_name) => match self.id_to_dfa.get(&id.to_string()) {
+                                    Some(dfa) => match std::fs::File::create(file_name) {
+                                        Ok(file) => {
+                                            let writer = std::io::BufWriter::new(file);
+                                            match serde_yaml::to_writer(writer, &dfa) {
+                                                Ok(_) => (),
+                                                Err(err) => println!(
+                                                    "Error writing {} to {}: {}",
+                                                    id, file_name, err
+                                                ),
+                                            }
+                                        }
+                                        Err(e) => println!("error : {:?}", e),
+                                    },
+                                    None => (),
+                                },
+                                None => println!("Expected file_name after write for {}.", *id),
+                            }
+                        } else {
+                            println!("unknown id: {}", id);
+                        }
+                    }
+                    None => println!("Expected id after edit."),
+                },
                 "edit" => match tokens.iter().nth(1) {
                     Some(id) => {
                         if self.id_to_dfa.contains_key(&id.to_string()) {
