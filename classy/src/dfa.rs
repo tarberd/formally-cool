@@ -48,6 +48,17 @@ impl Dfa {
             "(t)transition rm [state] ; [letter] -> [state] | [state] ; [letter] -> [state] | ...",
             "Remove list of transitions separeted by '|'."
         );
+        println!("{:<25}{}", "(ss)start_state", "Print start state.");
+        println!("{:<25}{}", "(ss)start_state set q0", "Set start_state.");
+        println!("{:<25}{}", "(as)accept_states", "Print accept states.");
+        println!(
+            "{:<25}{}",
+            "(as)accept_states add q0 (q1, q2) ...", "Add space separeted list of states."
+        );
+        println!(
+            "{:<25}{}",
+            "(as)accept_states rm q0 (q1, q2) ...", "Remove space separeted list of states."
+        );
     }
 
     fn wait_for_input() -> Result<String, std::io::Error> {
@@ -218,6 +229,33 @@ impl Dfa {
                         x => println!("{} is not a valid operation.", *x),
                     },
                     None => println!("{}", dfa),
+                },
+                "start_state" | "ss" => match tokens.iter().nth(1) {
+                    Some(operation) => match operation {
+                        &"set" => {
+                            dfa.start_state = tokens[2].to_string();
+                            println!("{}", dfa.start_state);
+                        }
+                        x => println!("{} is not a valid operation.", *x),
+                    },
+                    None => println!("{}", dfa.start_state),
+                },
+                "accept_states" | "as" => match tokens.iter().nth(1) {
+                    Some(operation) => match operation {
+                        &"add" => {
+                            let states = Dfa::tokens_to_states(&tokens[2..tokens.len()]);
+                            dfa.accept_states = dfa.accept_states.union(&states).cloned().collect();
+                            println!("{:?}", dfa.accept_states);
+                        }
+                        &"rm" => {
+                            let states = Dfa::tokens_to_states(&tokens[2..tokens.len()]);
+                            dfa.accept_states =
+                                dfa.accept_states.difference(&states).cloned().collect();
+                            println!("{:?}", dfa.accept_states);
+                        }
+                        x => println!("{} is not a valid operation.", *x),
+                    },
+                    None => println!("{:?}", dfa.accept_states),
                 },
                 x => {
                     println!("unknown command: {}", x);
