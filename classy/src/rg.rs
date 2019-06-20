@@ -88,6 +88,40 @@ impl Rg {
         }
     }
 
+    fn tokens_to_variables(tokens: &[&str]) -> BTreeSet<String> {
+        let mut variables = BTreeSet::new();
+
+        if tokens.len() != 0 {
+            let mut variable = String::new();
+
+            let mut open_variable = false;
+
+            for index in 0..tokens.len() {
+                let first_letter = tokens[index].get(0..1).unwrap();
+                let end = tokens[index].len();
+                let last_letter = tokens[index].get((end - 1)..end).unwrap();
+
+                if open_variable == false {
+                    variable = variable + tokens[index];
+                } else {
+                    variable = variable + " " + tokens[index];
+                }
+
+                if first_letter == "<" {
+                    open_variable = true;
+                }
+
+                if last_letter == ">" {
+                    variables.insert(variable.clone());
+                    variable = String::new();
+                    open_variable = false;
+                }
+            }
+        }
+
+        variables
+    }
+
     fn parse_input(input: &str, rg: &mut RegularGrammar) -> Result<(), ()> {
         let tokens: Vec<&str> = input.split_whitespace().collect();
 
@@ -96,8 +130,16 @@ impl Rg {
                 "help" => Rg::help(),
                 "exit" => return Err(()),
                 "variables" | "v" => match tokens.iter().nth(1) {
-                    Some(&"add") => {}
-                    Some(&"rm") => {}
+                    Some(&"add") => {
+                        let variables = Rg::tokens_to_variables(&tokens[2..tokens.len()]);
+                        rg.variables = rg.variables.union(&variables).cloned().collect();
+                        println!("{:?}", rg.variables);
+                    }
+                    Some(&"rm") => {
+                        let variables = Rg::tokens_to_variables(&tokens[2..tokens.len()]);
+                        rg.variables = rg.variables.difference(&variables).cloned().collect();
+                        println!("{:?}", rg.variables);
+                    }
                     Some(other) => println!("unknown command: {}", other),
                     None => println!("{:?}", rg.variables),
                 },
@@ -155,5 +197,56 @@ impl Rg {
             rules: BTreeMap::new(),
             start_variable: String::new(),
         }
+    }
+}
+
+mod test {
+    #[test]
+    fn tokens_to_variable() {
+        let input = "";
+        let tokens: Vec<&str> = input.split_whitespace().collect();
+
+        let variables = super::Rg::tokens_to_variables(&tokens);
+
+        let answer = [].iter().cloned().collect();
+
+        assert_eq!(variables, answer);
+
+        let input = "<q0>";
+        let tokens: Vec<&str> = input.split_whitespace().collect();
+
+        let variables = super::Rg::tokens_to_variables(&tokens);
+
+        let answer = [String::from("<q0>")].iter().cloned().collect();
+
+        assert_eq!(variables, answer);
+
+        let input = "<q0> <q1>";
+        let tokens: Vec<&str> = input.split_whitespace().collect();
+
+        let variables = super::Rg::tokens_to_variables(&tokens);
+
+        let answer = [String::from("<q0>"), String::from("<q1>")]
+            .iter()
+            .cloned()
+            .collect();
+
+        assert_eq!(variables, answer);
+
+        let input = "<q0> <q1> <(q0, q1)>";
+        let tokens: Vec<&str> = input.split_whitespace().collect();
+
+        let variables = super::Rg::tokens_to_variables(&tokens);
+
+        let answer = [
+            String::from("<q0>"),
+            String::from("<q1>"),
+            String::from("<(q0, q1)>"),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+
+        assert_eq!(variables, answer);
     }
 }
