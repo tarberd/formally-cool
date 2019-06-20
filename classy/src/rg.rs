@@ -159,6 +159,12 @@ impl Rg {
                     Some(other) => println!("unknown command: {}", other),
                     None => println!("{:?}", rg.variables),
                 },
+                "rules" | "r" => match tokens.iter().nth(1) {
+                    Some(&"add") => (),
+                    Some(&"rm") => (),
+                    Some(other) => println!("unknown command: {}", other),
+                    None => println!("{}", rg),
+                },
                 "start_variable" | "sv" => match tokens.iter().nth(1) {
                     Some(&"set") => {
                         rg.start_variable = tokens[2].to_string();
