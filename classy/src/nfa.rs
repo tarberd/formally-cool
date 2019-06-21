@@ -247,8 +247,21 @@ impl Nfa {
                             let transitions = Nfa::tokens_to_transitions(&tokens[2..tokens.len()]);
 
                             for ((state, letter), out_state) in &transitions {
-                                nfa.transition_function
-                                    .insert((state.clone(), letter.clone()), out_state.clone());
+                                match nfa
+                                    .transition_function
+                                    .get_mut(&(state.clone(), letter.clone()))
+                                {
+                                    Some(old_out_state) => {
+                                        *old_out_state =
+                                            old_out_state.union(out_state).cloned().collect();
+                                    }
+                                    None => {
+                                        nfa.transition_function.insert(
+                                            (state.clone(), letter.clone()),
+                                            out_state.clone(),
+                                        );
+                                    }
+                                }
                             }
 
                             println!("{}", nfa);
@@ -256,9 +269,17 @@ impl Nfa {
                         &"rm" => {
                             let transitions = Nfa::tokens_to_transitions(&tokens[2..tokens.len()]);
 
-                            for ((state, letter), _) in &transitions {
-                                nfa.transition_function
-                                    .remove(&(state.clone(), letter.clone()));
+                            for ((state, letter), out_state) in &transitions {
+                                match nfa
+                                    .transition_function
+                                    .get_mut(&(state.clone(), letter.clone()))
+                                {
+                                    Some(old_out_state) => {
+                                        *old_out_state =
+                                            old_out_state.difference(out_state).cloned().collect();
+                                    }
+                                    None => (),
+                                }
                             }
 
                             println!("{}", nfa);

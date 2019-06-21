@@ -1,8 +1,8 @@
 use crate::dfa::Dfa;
 use crate::nfa::Nfa;
-
+use crate::rg::Rg;
 use formally_cool::regular_languages::{
-    DeterministicFiniteAutomata, NondeterministicFiniteAutomata,
+    DeterministicFiniteAutomata, NondeterministicFiniteAutomata, RegularGrammar,
 };
 use std::collections::HashMap;
 use std::io;
@@ -11,6 +11,7 @@ use std::io::Write;
 pub struct Classy {
     id_to_dfa: HashMap<String, DeterministicFiniteAutomata>,
     id_to_nfa: HashMap<String, NondeterministicFiniteAutomata>,
+    id_to_rg: HashMap<String, RegularGrammar>,
 }
 
 impl Classy {
@@ -18,6 +19,7 @@ impl Classy {
         Classy {
             id_to_dfa: HashMap::new(),
             id_to_nfa: HashMap::new(),
+            id_to_rg: HashMap::new(),
         }
     }
 
@@ -62,7 +64,7 @@ impl Classy {
         );
         println!(
             "{:<width$}{}",
-            "[type] => dfa | nfa",
+            "[type] => dfa | nfa | rg",
             "Types available.",
             width = width
         );
@@ -111,6 +113,11 @@ impl Classy {
                                                     Nfa::run(&mut nfa);
                                                     println!("{}", nfa);
                                                     self.id_to_nfa.insert(id.to_string(), nfa);
+                                                } else if *x == "rg" {
+                                                    let mut rg = Rg::new_rg();
+                                                    Rg::run(&mut rg);
+                                                    println!("{}", rg);
+                                                    self.id_to_rg.insert(id.to_string(), rg);
                                                 } else {
                                                     println!("unknown type: {}.", *x);
                                                 }
@@ -131,14 +138,15 @@ impl Classy {
                                                                             file,
                                                                         );
                                                                     match serde_yaml::from_reader(reader) {
-                                                                            Ok(dfa) => {
-                                                                                self.id_to_dfa
-                                                                                    .insert(id.to_string(), dfa);
-                                                                            }
-                                                                            Err(err) => println!(
-                                                                                "Error parsing file {}: {}",
-                                                                                file_name, err
-                                                                            ),
+                                                                        Ok(dfa) => {
+                                                                            println!("{}", dfa);
+                                                                            self.id_to_dfa
+                                                                                .insert(id.to_string(), dfa);
+                                                                        }
+                                                                        Err(err) => println!(
+                                                                            "Error parsing file {}: {}",
+                                                                            file_name, err
+                                                                        ),
                                                                     };
                                                                 }
                                                                 Err(err) => println!(
@@ -162,14 +170,47 @@ impl Classy {
                                                                             file,
                                                                         );
                                                                     match serde_yaml::from_reader(reader) {
-                                                                            Ok(nfa) => {
-                                                                                self.id_to_nfa
-                                                                                    .insert(id.to_string(), nfa);
-                                                                            }
-                                                                            Err(err) => println!(
-                                                                                "Error parsing file {}: {}",
-                                                                                file_name, err
-                                                                            ),
+                                                                        Ok(nfa) => {
+                                                                            println!("{}", nfa);
+                                                                            self.id_to_nfa
+                                                                                .insert(id.to_string(), nfa);
+                                                                        }
+                                                                        Err(err) => println!(
+                                                                            "Error parsing file {}: {}",
+                                                                            file_name, err
+                                                                        ),
+                                                                    };
+                                                                }
+                                                                Err(err) => println!(
+                                                                    "Error opening file {}: {}",
+                                                                    file_name, err
+                                                                ),
+                                                            }
+                                                        }
+                                                        None => println!(
+                                                            "Expected file_name after read for {}.",
+                                                            *id
+                                                        ),
+                                                    }
+                                                } else if *x == "rg" {
+                                                    match tokens.iter().nth(5) {
+                                                        Some(file_name) => {
+                                                            match std::fs::File::open(file_name) {
+                                                                Ok(file) => {
+                                                                    let reader =
+                                                                        std::io::BufReader::new(
+                                                                            file,
+                                                                        );
+                                                                    match serde_yaml::from_reader(reader) {
+                                                                        Ok(rg) => {
+                                                                            println!("{}", rg);
+                                                                            self.id_to_rg
+                                                                                .insert(id.to_string(), rg);
+                                                                        }
+                                                                        Err(err) => println!(
+                                                                            "Error parsing file {}: {}",
+                                                                            file_name, err
+                                                                        ),
                                                                     };
                                                                 }
                                                                 Err(err) => println!(
@@ -245,6 +286,26 @@ impl Classy {
                                 },
                                 None => println!("Expected file_name after write for {}.", *id),
                             }
+                        } else if self.id_to_rg.contains_key(&id.to_string()) {
+                            match tokens.iter().nth(2) {
+                                Some(file_name) => match self.id_to_rg.get(&id.to_string()) {
+                                    Some(rg) => match std::fs::File::create(file_name) {
+                                        Ok(file) => {
+                                            let writer = std::io::BufWriter::new(file);
+                                            match serde_yaml::to_writer(writer, &rg) {
+                                                Ok(_) => (),
+                                                Err(err) => println!(
+                                                    "Error writing {} to {}: {}",
+                                                    id, file_name, err
+                                                ),
+                                            }
+                                        }
+                                        Err(e) => println!("error : {:?}", e),
+                                    },
+                                    None => (),
+                                },
+                                None => println!("Expected file_name after write for {}.", *id),
+                            }
                         } else {
                             println!("unknown id: {}", id);
                         }
@@ -269,6 +330,14 @@ impl Classy {
                                 }
                                 None => (),
                             }
+                        } else if self.id_to_rg.contains_key(&id.to_string()) {
+                            match self.id_to_rg.get_mut(&id.to_string()) {
+                                Some(mut rg) => {
+                                    Rg::run(&mut rg);
+                                    println!("{}", rg);
+                                }
+                                None => (),
+                            }
                         } else {
                             println!("unknown id: {}", id);
                         }
@@ -284,6 +353,11 @@ impl Classy {
                     } else if self.id_to_nfa.contains_key(&x.to_string()) {
                         match self.id_to_nfa.get(&x.to_string()) {
                             Some(nfa) => println!("{}", nfa),
+                            None => (),
+                        }
+                    } else if self.id_to_rg.contains_key(&x.to_string()) {
+                        match self.id_to_rg.get(&x.to_string()) {
+                            Some(rg) => println!("{}", rg),
                             None => (),
                         }
                     } else {
