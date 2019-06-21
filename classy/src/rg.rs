@@ -142,9 +142,11 @@ impl Rg {
         if tokens.len() >= 3 {
             let source_variable = tokens[0].to_string();
 
+            let mut variable = String::new();
+            let mut is_open_variable = false;
+
             if tokens[1] == "=>" {
                 for index in 2..tokens.len() {
-                    let first_letter = tokens[index].get(0..1).unwrap();
                     let end = tokens[index].len();
                     let last_letter = tokens[index].get((end - 1)..end).unwrap();
 
@@ -152,7 +154,22 @@ impl Rg {
                         if tokens[index].len() == 1 {
                             out_set.insert(tokens[index].to_string());
                         } else {
-                            out_set.insert(tokens[index].to_string());
+                            if is_open_variable {
+                                variable = variable + " " + tokens[index];
+
+                                if last_letter == ">" {
+                                    out_set.insert(variable.clone());
+                                    is_open_variable = false;
+                                }
+                            } else {
+                                if last_letter == ">" {
+                                    out_set.insert(tokens[index].to_string());
+                                    variable = String::new();
+                                } else {
+                                    variable = tokens[index].to_string();
+                                    is_open_variable = true;
+                                }
+                            }
                         }
                     }
                 }
@@ -202,8 +219,38 @@ impl Rg {
                     None => println!("{:?}", rg.variables),
                 },
                 "rules" | "r" => match tokens.iter().nth(1) {
-                    Some(&"add") => (),
-                    Some(&"rm") => (),
+                    Some(&"add") => {
+                        let rules = Rg::tokens_to_rules(&tokens[2..tokens.len()]);
+
+                        for (variable, productions) in &rules {
+                            match rg.rules.get_mut(variable) {
+                                Some(old_productions) => {
+                                    *old_productions =
+                                        old_productions.union(&productions).cloned().collect();
+                                }
+                                None => {
+                                    rg.rules.insert(variable.clone(), productions.clone());
+                                }
+                            }
+                        }
+
+                        println!("{}", rg);
+                    }
+                    Some(&"rm") => {
+                        let rules = Rg::tokens_to_rules(&tokens[2..tokens.len()]);
+
+                        for (variable, productions) in &rules {
+                            match rg.rules.get_mut(variable) {
+                                Some(old_productions) => {
+                                    *old_productions =
+                                        old_productions.difference(&productions).cloned().collect();
+                                }
+                                None => (),
+                            }
+                        }
+
+                        println!("{}", rg);
+                    }
                     Some(other) => println!("unknown command: {}", other),
                     None => println!("{}", rg),
                 },
@@ -340,6 +387,29 @@ mod test {
         answer.insert(
             String::from("<S>"),
             [String::from("a<(A, B)>")].iter().cloned().collect(),
+        );
+
+        assert_eq!(rules, answer);
+
+        let input = "<S> => a<(A, B)> | a | a<A> | a<(A, (B, C))> | b";
+        let tokens: Vec<&str> = input.split_whitespace().collect();
+
+        let rules = super::Rg::tokens_to_rules(&tokens);
+
+        let mut answer = BTreeMap::new();
+
+        answer.insert(
+            String::from("<S>"),
+            [
+                String::from("a<(A, B)>"),
+                String::from("a"),
+                String::from("a<A>"),
+                String::from("a<(A, (B, C))>"),
+                String::from("b"),
+            ]
+            .iter()
+            .cloned()
+            .collect(),
         );
 
         assert_eq!(rules, answer);
