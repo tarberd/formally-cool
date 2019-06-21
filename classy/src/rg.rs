@@ -64,6 +64,18 @@ impl Rg {
         println!("{:<width$}{}", "(r)rules", "Print rules.", width = width);
         println!(
             "{:<width$}{}",
+            "(r)rules add <S> => a<A> | b | b<B> ...",
+            "Print start variable.",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
+            "(r)rules rm <S> => a<A> | b | b<B> ...",
+            "Print start variable.",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
             "(sv)start_variable",
             "Print start variable.",
             width = width
@@ -120,6 +132,36 @@ impl Rg {
         }
 
         variables
+    }
+
+    fn tokens_to_rules(tokens: &[&str]) -> BTreeMap<String, BTreeSet<String>> {
+        let mut rules = BTreeMap::new();
+
+        let mut out_set = BTreeSet::new();
+
+        if tokens.len() >= 3 {
+            let source_variable = tokens[0].to_string();
+
+            if tokens[1] == "=>" {
+                for index in 2..tokens.len() {
+                    let first_letter = tokens[index].get(0..1).unwrap();
+                    let end = tokens[index].len();
+                    let last_letter = tokens[index].get((end - 1)..end).unwrap();
+
+                    if tokens[index] != "|" {
+                        if tokens[index].len() == 1 {
+                            out_set.insert(tokens[index].to_string());
+                        } else {
+                            out_set.insert(tokens[index].to_string());
+                        }
+                    }
+                }
+            }
+
+            rules.insert(source_variable, out_set);
+        }
+
+        rules
     }
 
     fn parse_input(input: &str, rg: &mut RegularGrammar) -> Result<(), ()> {
@@ -254,5 +296,52 @@ mod test {
         .collect();
 
         assert_eq!(variables, answer);
+    }
+
+    #[test]
+    fn tokens_to_rules() {
+        use std::collections::BTreeMap;
+
+        let input = "<S> => a";
+        let tokens: Vec<&str> = input.split_whitespace().collect();
+
+        let rules = super::Rg::tokens_to_rules(&tokens);
+
+        let mut answer = BTreeMap::new();
+
+        answer.insert(
+            String::from("<S>"),
+            [String::from("a")].iter().cloned().collect(),
+        );
+
+        assert_eq!(rules, answer);
+
+        let input = "<S> => a<A>";
+        let tokens: Vec<&str> = input.split_whitespace().collect();
+
+        let rules = super::Rg::tokens_to_rules(&tokens);
+
+        let mut answer = BTreeMap::new();
+
+        answer.insert(
+            String::from("<S>"),
+            [String::from("a<A>")].iter().cloned().collect(),
+        );
+
+        assert_eq!(rules, answer);
+
+        let input = "<S> => a<(A, B)>";
+        let tokens: Vec<&str> = input.split_whitespace().collect();
+
+        let rules = super::Rg::tokens_to_rules(&tokens);
+
+        let mut answer = BTreeMap::new();
+
+        answer.insert(
+            String::from("<S>"),
+            [String::from("a<(A, B)>")].iter().cloned().collect(),
+        );
+
+        assert_eq!(rules, answer);
     }
 }
