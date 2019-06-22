@@ -4,7 +4,7 @@ use crate::rg::Rg;
 use formally_cool::regular_languages::{
     DeterministicFiniteAutomata, NondeterministicFiniteAutomata, RegularGrammar,
 };
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::io;
 use std::io::Write;
 
@@ -16,8 +16,50 @@ pub struct Classy {
 
 impl Classy {
     pub fn new() -> Self {
+        let mut id_to_dfa = HashMap::new();
+
+        let mut hash = BTreeMap::new();
+
+        hash.insert((String::from("q0"), String::from("a")), String::from("q0"));
+        hash.insert((String::from("q0"), String::from("b")), String::from("q1"));
+        hash.insert((String::from("q1"), String::from("a")), String::from("q0"));
+        hash.insert((String::from("q1"), String::from("b")), String::from("q1"));
+
+        let automata = DeterministicFiniteAutomata {
+            states: ["q0".to_string(), "q1".to_string()]
+                .iter()
+                .cloned()
+                .collect(),
+            alphabet: ["a".to_string(), "b".to_string()].iter().cloned().collect(),
+            transition_function: hash,
+            start_state: String::from("q0"),
+            accept_states: [String::from("q0")].iter().cloned().collect(),
+        };
+
+        id_to_dfa.insert("dfa_ends_with_a".to_string(), automata);
+
+        let mut hash = BTreeMap::new();
+
+        hash.insert((String::from("q0"), String::from("a")), String::from("q0"));
+        hash.insert((String::from("q0"), String::from("b")), String::from("q1"));
+        hash.insert((String::from("q1"), String::from("a")), String::from("q0"));
+        hash.insert((String::from("q1"), String::from("b")), String::from("q1"));
+
+        let automata2 = DeterministicFiniteAutomata {
+            states: ["q0".to_string(), "q1".to_string()]
+                .iter()
+                .cloned()
+                .collect(),
+            alphabet: ["a".to_string(), "b".to_string()].iter().cloned().collect(),
+            transition_function: hash,
+            start_state: String::from("q1"),
+            accept_states: [String::from("q1")].iter().cloned().collect(),
+        };
+
+        id_to_dfa.insert("dfa_ends_with_b".to_string(), automata2);
+
         Classy {
-            id_to_dfa: HashMap::new(),
+            id_to_dfa: id_to_dfa,
             id_to_nfa: HashMap::new(),
             id_to_rg: HashMap::new(),
         }
@@ -60,6 +102,30 @@ impl Classy {
             "{:<width$}{}",
             "[expression] => minimize [id]",
             "Create minimized DFA from [id].",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
+            "[expression] => union [id] [id]",
+            "Create union DFA from [id] and [id].",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
+            "[expression] => intersection [id] [id]",
+            "Create intersection DFA from [id] and [id].",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
+            "[expression] => to_rg [id]",
+            "Transform [id] DFA to RG.",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
+            "[expression] => to_nfa [id]",
+            "Transform [id] to NFA.",
             width = width
         );
         println!(
@@ -139,6 +205,121 @@ impl Classy {
                                     }
                                 }
                                 None => println!("Expected DFA id after minimize for {}.", *id),
+                            },
+                            Some(&"union") => match tokens.iter().nth(3) {
+                                Some(lhs_id) => {
+                                    if self.id_to_dfa.contains_key(&lhs_id.to_string()) {
+                                        match self.id_to_dfa.get(&lhs_id.to_string()) {
+                                            Some(lhs_dfa) => match tokens.iter().nth(4) {
+                                                Some(rhs_id) => {
+                                                    if self
+                                                        .id_to_dfa
+                                                        .contains_key(&rhs_id.to_string())
+                                                    {
+                                                        match self
+                                                            .id_to_dfa
+                                                            .get(&rhs_id.to_string())
+                                                        {
+                                                            Some(rhs_dfa) => {
+                                                                let union = lhs_dfa.union(rhs_dfa);
+                                                                println!("{}", union);
+                                                                self.id_to_dfa
+                                                                    .insert(id.to_string(), union);
+                                                            }
+                                                            None => (),
+                                                        }
+                                                    } else {
+                                                        println!(
+                                                            "{} is not a valid DFA id.",
+                                                            rhs_id
+                                                        )
+                                                    }
+                                                }
+                                                None => println!("Expected id"),
+                                            },
+                                            None => (),
+                                        }
+                                    } else {
+                                        println!("{} is not a valid DFA id.", lhs_id)
+                                    }
+                                }
+                                None => println!("Expected DFA id after union for {}.", *id),
+                            },
+                            Some(&"intersection") => match tokens.iter().nth(3) {
+                                Some(lhs_id) => {
+                                    if self.id_to_dfa.contains_key(&lhs_id.to_string()) {
+                                        match self.id_to_dfa.get(&lhs_id.to_string()) {
+                                            Some(lhs_dfa) => match tokens.iter().nth(4) {
+                                                Some(rhs_id) => {
+                                                    if self
+                                                        .id_to_dfa
+                                                        .contains_key(&rhs_id.to_string())
+                                                    {
+                                                        match self
+                                                            .id_to_dfa
+                                                            .get(&rhs_id.to_string())
+                                                        {
+                                                            Some(rhs_dfa) => {
+                                                                let intersection =
+                                                                    lhs_dfa.intersection(rhs_dfa);
+                                                                println!("{}", intersection);
+                                                                self.id_to_dfa.insert(
+                                                                    id.to_string(),
+                                                                    intersection,
+                                                                );
+                                                            }
+                                                            None => (),
+                                                        }
+                                                    } else {
+                                                        println!(
+                                                            "{} is not a valid DFA id.",
+                                                            rhs_id
+                                                        )
+                                                    }
+                                                }
+                                                None => println!("Expected id"),
+                                            },
+                                            None => (),
+                                        }
+                                    } else {
+                                        println!("{} is not a valid DFA id.", lhs_id)
+                                    }
+                                }
+                                None => println!("Expected DFA id after intersection for {}.", *id),
+                            },
+                            Some(&"to_rg") => match tokens.iter().nth(3) {
+                                Some(rhs_id) => {
+                                    if self.id_to_dfa.contains_key(&rhs_id.to_string()) {
+                                        match self.id_to_dfa.get(&rhs_id.to_string()) {
+                                            Some(dfa) => {
+                                                let rg = RegularGrammar::from(dfa);
+                                                println!("{}", rg);
+                                                self.id_to_rg.insert(id.to_string(), rg);
+                                            }
+                                            None => (),
+                                        }
+                                    } else {
+                                        println!("{} is not a valid DFA id.", rhs_id)
+                                    }
+                                }
+                                None => println!("Expected DFA id after to_rg for {}.", *id),
+                            },
+                            Some(&"to_nfa") => match tokens.iter().nth(3) {
+                                Some(rhs_id) => {
+                                    if self.id_to_rg.contains_key(&rhs_id.to_string()) {
+                                        match self.id_to_rg.get(&rhs_id.to_string()) {
+                                            Some(rg) => {
+                                                let nfa = NondeterministicFiniteAutomata::from(rg);
+                                                println!("{}", nfa);
+                                                self.id_to_nfa.insert(id.to_string(), nfa);
+                                            }
+                                            None => (),
+                                        }
+                                    } else {
+                                        println!("{} is not a valid RG id.", rhs_id)
+                                    }
+                                }
+                                None => println!("Expected RG id after to_rg for {}.", *id),
                             },
                             Some(&"read") => match tokens.iter().nth(3) {
                                 Some(x) => {
