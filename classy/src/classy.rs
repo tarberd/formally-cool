@@ -130,6 +130,12 @@ impl Classy {
         );
         println!(
             "{:<width$}{}",
+            "[expression] => to_dfa [id]",
+            "Transform [id] to DFA.",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
             "write [id] [file_name]",
             "Write object to file.",
             width = width
@@ -319,7 +325,24 @@ impl Classy {
                                         println!("{} is not a valid RG id.", rhs_id)
                                     }
                                 }
-                                None => println!("Expected RG id after to_rg for {}.", *id),
+                                None => println!("Expected RG id after to_nfa for {}.", *id),
+                            },
+                            Some(&"to_dfa") => match tokens.iter().nth(3) {
+                                Some(rhs_id) => {
+                                    if self.id_to_nfa.contains_key(&rhs_id.to_string()) {
+                                        match self.id_to_nfa.get(&rhs_id.to_string()) {
+                                            Some(nfa) => {
+                                                let dfa = DeterministicFiniteAutomata::from(nfa);
+                                                println!("{}", dfa);
+                                                self.id_to_dfa.insert(id.to_string(), dfa);
+                                            }
+                                            None => (),
+                                        }
+                                    } else {
+                                        println!("{} is not a valid NFA id.", rhs_id)
+                                    }
+                                }
+                                None => println!("Expected RG id after to_dfa for {}.", *id),
                             },
                             Some(&"read") => match tokens.iter().nth(3) {
                                 Some(x) => {
