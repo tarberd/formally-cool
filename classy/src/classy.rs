@@ -448,6 +448,35 @@ impl Classy {
                                                 *id
                                             ),
                                         }
+                                    } else if *x == "cfg" {
+                                        match tokens.iter().nth(4) {
+                                            Some(file_name) => {
+                                                match std::fs::File::open(file_name) {
+                                                    Ok(file) => {
+                                                        let reader = std::io::BufReader::new(file);
+                                                        match serde_yaml::from_reader(reader) {
+                                                            Ok(cfg) => {
+                                                                println!("{}", cfg);
+                                                                self.id_to_cfg
+                                                                    .insert(id.to_string(), cfg);
+                                                            }
+                                                            Err(err) => println!(
+                                                                "Error parsing file {}: {}",
+                                                                file_name, err
+                                                            ),
+                                                        };
+                                                    }
+                                                    Err(err) => println!(
+                                                        "Error opening file {}: {}",
+                                                        file_name, err
+                                                    ),
+                                                }
+                                            }
+                                            None => println!(
+                                                "Expected file_name after read for {}.",
+                                                *id
+                                            ),
+                                        }
                                     } else {
                                         println!("unknown type: {}", *x);
                                     }
@@ -539,6 +568,26 @@ impl Classy {
                                 },
                                 None => println!("Expected file_name after write for {}.", *id),
                             }
+                        } else if self.id_to_cfg.contains_key(&id.to_string()) {
+                            match tokens.iter().nth(2) {
+                                Some(file_name) => match self.id_to_cfg.get(&id.to_string()) {
+                                    Some(cfg) => match std::fs::File::create(file_name) {
+                                        Ok(file) => {
+                                            let writer = std::io::BufWriter::new(file);
+                                            match serde_yaml::to_writer(writer, &cfg) {
+                                                Ok(_) => (),
+                                                Err(err) => println!(
+                                                    "Error writing {} to {}: {}",
+                                                    id, file_name, err
+                                                ),
+                                            }
+                                        }
+                                        Err(e) => println!("error : {:?}", e),
+                                    },
+                                    None => (),
+                                },
+                                None => println!("Expected file_name after write for {}.", *id),
+                            }
                         } else {
                             println!("unknown id: {}", id);
                         }
@@ -568,6 +617,14 @@ impl Classy {
                                 Some(mut rg) => {
                                     Rg::run(&mut rg);
                                     println!("{}", rg);
+                                }
+                                None => (),
+                            }
+                        } else if self.id_to_cfg.contains_key(&id.to_string()) {
+                            match self.id_to_cfg.get_mut(&id.to_string()) {
+                                Some(mut cfg) => {
+                                    Cfg::run(&mut cfg);
+                                    println!("{}", cfg);
                                 }
                                 None => (),
                             }
@@ -611,6 +668,11 @@ impl Classy {
                     } else if self.id_to_rg.contains_key(&x.to_string()) {
                         match self.id_to_rg.get(&x.to_string()) {
                             Some(rg) => println!("{}", rg),
+                            None => (),
+                        }
+                    } else if self.id_to_cfg.contains_key(&x.to_string()) {
+                        match self.id_to_cfg.get(&x.to_string()) {
+                            Some(cfg) => println!("{}", cfg),
                             None => (),
                         }
                     } else {
