@@ -1,6 +1,8 @@
+use crate::cfg::Cfg;
 use crate::dfa::Dfa;
 use crate::nfa::Nfa;
 use crate::rg::Rg;
+use formally_cool::context_free_languages::ContextFreeGrammar;
 use formally_cool::regular_languages::{
     DeterministicFiniteAutomata, NondeterministicFiniteAutomata, RegularGrammar,
 };
@@ -12,6 +14,7 @@ pub struct Classy {
     id_to_dfa: HashMap<String, DeterministicFiniteAutomata>,
     id_to_nfa: HashMap<String, NondeterministicFiniteAutomata>,
     id_to_rg: HashMap<String, RegularGrammar>,
+    id_to_cfg: HashMap<String, ContextFreeGrammar>,
 }
 
 impl Classy {
@@ -62,6 +65,7 @@ impl Classy {
             id_to_dfa: id_to_dfa,
             id_to_nfa: HashMap::new(),
             id_to_rg: HashMap::new(),
+            id_to_cfg: HashMap::new(),
         }
     }
 
@@ -96,6 +100,12 @@ impl Classy {
             "{:<width$}{}",
             "[expression] => read [type] [file_name]",
             "Create new object from file.",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
+            "[type] => dfa | nfa | rg | cfg",
+            "Types available.",
             width = width
         );
         println!(
@@ -148,12 +158,6 @@ impl Classy {
         );
         println!(
             "{:<width$}{}",
-            "[type] => dfa | nfa | rg",
-            "Types available.",
-            width = width
-        );
-        println!(
-            "{:<width$}{}",
             "edit [id]",
             "Open edit context for [id] object.",
             width = width
@@ -195,8 +199,13 @@ impl Classy {
                                         Rg::run(&mut rg);
                                         println!("{}", rg);
                                         self.id_to_rg.insert(id.to_string(), rg);
+                                    } else if *x == "cfg" {
+                                        let mut cfg = Cfg::new_cfg();
+                                        Cfg::run(&mut cfg);
+                                        println!("{}", cfg);
+                                        self.id_to_cfg.insert(id.to_string(), cfg);
                                     } else {
-                                        println!("unknown type: {}.", *x);
+                                        println!("unknown type: {}.", x);
                                     }
                                 }
                                 None => println!("Expected type after new for {}.", *id),

@@ -1,13 +1,72 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
+use std::fmt;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-struct ContextFreeGrammar {
+pub struct ContextFreeGrammar {
     pub variables: BTreeSet<String>,
     pub terminals: BTreeSet<String>,
     pub rules: BTreeMap<String, BTreeSet<Vec<String>>>,
     pub start_variable: String,
+}
+
+impl fmt::Display for ContextFreeGrammar {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} => ", self.start_variable)?;
+        match self.rules.get(&self.start_variable) {
+            Some(set) => {
+                for vec in set {
+                    if vec != set.iter().last().unwrap() {
+                        for string in vec {
+                            if string != vec.iter().last().unwrap() {
+                                write!(f, "{}", string)?;
+                            } else {
+                                write!(f, "{} | ", string)?;
+                            }
+                        }
+                    } else {
+                        for string in vec {
+                            write!(f, "{}", string)?;
+                        }
+                    }
+                }
+            }
+            None => write!(f, "-")?,
+        };
+        write!(f, "\n")?;
+
+        let mut variables = self.variables.clone();
+        variables.remove(&self.start_variable);
+        for variable in &variables {
+            write!(f, "{} => ", variable)?;
+            match self.rules.get(variable) {
+                Some(set) => {
+                    for vec in set {
+                        if vec != set.iter().last().unwrap() {
+                            for string in vec {
+                                if string != vec.iter().last().unwrap() {
+                                    write!(f, "{}", string)?;
+                                } else {
+                                    write!(f, "{} | ", string)?;
+                                }
+                            }
+                        } else {
+                            for string in vec {
+                                write!(f, "{}", string)?;
+                            }
+                        }
+                    }
+                }
+                None => write!(f, "-")?,
+            };
+            if variable != variables.iter().last().unwrap() {
+                write!(f, "\n")?;
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl ContextFreeGrammar {
