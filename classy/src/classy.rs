@@ -136,6 +136,12 @@ impl Classy {
         );
         println!(
             "{:<width$}{}",
+            "compute [id] [string]",
+            "Checks if [id] dfa accepts [string] or not.",
+            width = width
+        );
+        println!(
+            "{:<width$}{}",
             "write [id] [file_name]",
             "Write object to file.",
             width = width
@@ -558,6 +564,26 @@ impl Classy {
                             }
                         } else {
                             println!("unknown id: {}", id);
+                        }
+                    }
+                    None => println!("Expected id after edit."),
+                },
+                "compute" => match tokens.iter().nth(1) {
+                    Some(id) => {
+                        if self.id_to_dfa.contains_key(&id.to_string()) {
+                            match self.id_to_dfa.get(&id.to_string()) {
+                                Some(dfa) => match tokens.iter().nth(2) {
+                                    Some(string) => {
+                                        println!("{}", dfa.compute(&string.to_string()));
+                                    }
+                                    None => {
+                                        println!("Expected string after id");
+                                    }
+                                },
+                                None => (),
+                            }
+                        } else {
+                            println!("unknown dfa: {}", id);
                         }
                     }
                     None => println!("Expected id after edit."),
